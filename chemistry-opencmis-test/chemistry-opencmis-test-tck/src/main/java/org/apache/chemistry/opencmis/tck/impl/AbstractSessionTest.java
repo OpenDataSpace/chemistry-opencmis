@@ -23,6 +23,7 @@ import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.OK;
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.SKIPPED;
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.UNEXPECTED_EXCEPTION;
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.WARNING;
+import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.INFO;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -76,6 +77,7 @@ import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.commons.enums.Action;
 import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
 import org.apache.chemistry.opencmis.commons.enums.BindingType;
+import org.apache.chemistry.opencmis.commons.enums.CapabilityOrderBy;
 import org.apache.chemistry.opencmis.commons.enums.Cardinality;
 import org.apache.chemistry.opencmis.commons.enums.CmisVersion;
 import org.apache.chemistry.opencmis.commons.enums.ContentStreamAllowed;
@@ -107,6 +109,7 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
         SELECT_ALL_NO_CACHE_OC.setIncludePolicies(true);
         SELECT_ALL_NO_CACHE_OC.setIncludeRelationships(IncludeRelationships.BOTH);
         SELECT_ALL_NO_CACHE_OC.setRenditionFilterString("*");
+        SELECT_ALL_NO_CACHE_OC.setOrderBy(null);
 
         SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME = new OperationContextImpl(SELECT_ALL_NO_CACHE_OC);
         SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME.setOrderBy("cmis:name");
@@ -757,6 +760,14 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
         }
 
         return cap.isGetFolderTreeSupported().booleanValue();
+    }
+
+    protected boolean isOrderByNameSupported(Session session) {
+        if (session.getRepositoryInfo().getCapabilities().getOrderByCapability() == CapabilityOrderBy.NONE) {
+            return false;
+        }
+
+        return true;
     }
 
     protected boolean hasRelationships(Session session) {
@@ -1781,9 +1792,13 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
 
         // getChildren
 
+        boolean supportsOrderByName = isOrderByNameSupported(session);
+        OperationContext orderContext = (supportsOrderByName ? SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME
+                : SELECT_ALL_NO_CACHE_OC);
+
         long childrenCount = 0;
         long childrenFolderCount = 0;
-        ItemIterable<CmisObject> children = folder.getChildren(SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME);
+        ItemIterable<CmisObject> children = folder.getChildren(orderContext);
 
         int orderByNameIssues = 0;
         String lastName = null;
@@ -1812,9 +1827,13 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
             addResult(results, createResult(WARNING, "getChildren did not report the total number of items!"));
         }
 
-        f = createResult(WARNING,
-                "Children should be ordered by cmis:name, but they are not! (It might be a collation mismtach.)");
-        addResult(results, assertEquals(0, orderByNameIssues, null, f));
+        if (supportsOrderByName) {
+            f = createResult(WARNING,
+                    "Children should be ordered by cmis:name, but they are not! (It might be a collation mismtach.)");
+            addResult(results, assertEquals(0, orderByNameIssues, null, f));
+        } else {
+            addResult(results, createResult(INFO, "Repository doesn't support Order By for getChildren()."));
+        }
 
         // getDescendants
 
@@ -2010,6 +2029,54 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
 
     // --- type checks ---
 
+    protected CmisTestResult checkQueryName(String queryName, boolean isRequired, String message) {
+        List<CmisTestResult> results = new ArrayList<CmisTestResult>();
+
+        CmisTestResult f;
+
+        if (queryName == null || queryName.length() == 0) {
+            addResult(results, createResult(isRequired ? FAILURE : WARNING, "Query name is not set!"));
+        } else {
+            f = createResult(FAILURE, "Query name contains invalid character: ' '");
+            addResult(results, assertIsTrue(queryName.indexOf(' ') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: ','");
+            addResult(results, assertIsTrue(queryName.indexOf(',') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '\"'");
+            addResult(results, assertIsTrue(queryName.indexOf('"') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '''");
+            addResult(results, assertIsTrue(queryName.indexOf('\'') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '\\'");
+            addResult(results, assertIsTrue(queryName.indexOf('\\') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '.'");
+            addResult(results, assertIsTrue(queryName.indexOf('.') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '('");
+            addResult(results, assertIsTrue(queryName.indexOf('(') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: ')'");
+            addResult(results, assertIsTrue(queryName.indexOf(')') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '\\t'");
+            addResult(results, assertIsTrue(queryName.indexOf('\t') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '\\n'");
+            addResult(results, assertIsTrue(queryName.indexOf('\n') < 0, null, f));
+
+            f = createResult(FAILURE, "Query name contains invalid character: '\\r'");
+            addResult(results, assertIsTrue(queryName.indexOf('\r') < 0, null, f));
+        }
+
+        CmisTestResultImpl result = createResult(getWorst(results), message);
+        result.getChildren().addAll(results);
+
+        return (result.getStatus().getLevel() <= OK.getLevel() ? null : result);
+    }
+
     protected CmisTestResult checkTypeDefinition(Session session, TypeDefinition type, String message) {
         List<CmisTestResult> results = new ArrayList<CmisTestResult>();
 
@@ -2031,8 +2098,9 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
             // f = createResult(FAILURE, "Local namespace is not set!");
             // addResult(results, assertStringNotEmpty(type.(), null, f));
 
-            f = createResult(FAILURE, "Query name is not set!");
-            addResult(results, assertStringNotEmpty(type.getQueryName(), null, f));
+            boolean isQueryNameRequired = Boolean.TRUE.equals(type.isQueryable());
+            addResult(results,
+                    checkQueryName(type.getQueryName(), isQueryNameRequired, "Type Query Name: " + type.getQueryName()));
 
             if ((type.getId() != null) && (type.getBaseTypeId() != null)) {
                 if (type.getBaseTypeId().value().equals(type.getId())) {
@@ -3258,6 +3326,10 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
                                 "Queryable: expected: " + queryable + " / actual: " + propDef.isQueryable());
                         addResult(results, f);
                     }
+
+                    boolean isPropertyQueryNameRequired = Boolean.TRUE.equals(queryable);
+                    checkQueryName(propDef.getQueryName(), isPropertyQueryNameRequired, "Property Query Name: "
+                            + propDef.getQueryName());
 
                     if ((orderable != null) && !orderable.equals(propDef.isOrderable())) {
                         f = createResult(FAILURE,

@@ -85,6 +85,7 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.ObjectDataImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PolicyIdListImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertiesImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyIdImpl;
+import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyStringImpl;
 
 /**
  * Base class for all AtomPub client services.
@@ -140,6 +141,10 @@ public abstract class AbstractAtomPubService implements LinkAccess {
      * Return the CMIS version of the given repository.
      */
     protected CmisVersion getCmisVersion(String repositoryId) {
+        if (CmisBindingsHelper.getForcedCmisVersion(session) != null) {
+            return CmisBindingsHelper.getForcedCmisVersion(session);
+        }
+
         RepositoryInfoCache cache = CmisBindingsHelper.getRepositoryInfoCache(session);
         RepositoryInfo info = cache.get(repositoryId);
 
@@ -534,11 +539,18 @@ public abstract class AbstractAtomPubService implements LinkAccess {
     /**
      * Creates a CMIS object with properties and policy ids.
      */
-    protected ObjectDataImpl createObject(Properties properties, List<String> policies) {
+    protected ObjectDataImpl createObject(Properties properties, String changeToken, List<String> policies) {
         ObjectDataImpl object = new ObjectDataImpl();
 
         if (properties == null) {
             properties = new PropertiesImpl();
+            if (changeToken != null) {
+                ((PropertiesImpl) properties)
+                        .addProperty(new PropertyStringImpl(PropertyIds.CHANGE_TOKEN, changeToken));
+            }
+        } else if (changeToken != null && !properties.getProperties().containsKey(PropertyIds.CHANGE_TOKEN)) {
+            properties = new PropertiesImpl(properties);
+            ((PropertiesImpl) properties).addProperty(new PropertyStringImpl(PropertyIds.CHANGE_TOKEN, changeToken));
         }
         object.setProperties(properties);
 

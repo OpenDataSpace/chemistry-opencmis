@@ -20,19 +20,13 @@ package org.apache.chemistry.opencmis.inmemory.storedobj.api;
 
 import java.util.List;
 
-/**
- * A folder is a StoredObject that that has a path and children. Children can be
- * folder or documents
- * 
- * @author Jens
- */
-public interface Children {
-    
-    public class ChildrenResult {
+public interface ObjectStoreFiling {
+
+    public static class ChildrenResult {
         private int noItems;
-        private List<? extends StoredObject> children;
+        private List<Fileable> children;
                 
-        public ChildrenResult(List<? extends StoredObject> children, int noItems) {
+        public ChildrenResult(List<Fileable> children, int noItems) {
             this.children = children;
             this.noItems = noItems;
         }
@@ -41,7 +35,7 @@ public interface Children {
             return noItems;
         }
         
-        public List<? extends StoredObject> getChildren() {
+        public List<Fileable> getChildren() {
             return children;
         }
     }
@@ -50,6 +44,8 @@ public interface Children {
      * get all the children of this folder. To support paging an initial offset
      * and a maximum number of children to retrieve can be passed
      * 
+     * @param folder
+     *            folder to get children from
      * @param maxItems
      *            max. number of items to return
      * @param skipCount
@@ -61,13 +57,15 @@ public interface Children {
      * 
      * @return list of children objects
      */
-    ChildrenResult getChildren(int maxItems, int skipCount, String user, boolean usePwc);
+    ChildrenResult getChildren(Folder folder, int maxItems, int skipCount, String user, boolean usePwc);
 
     /**
      * get all the children of this folder which are folders. To support paging
      * an initial offset and a maximum number of children to retrieve can be
      * passed.
      * 
+     * @param folder
+     *            folder to get children from
      * @param maxItems
      *            max. number of items to return
      * @param skipCount
@@ -75,15 +73,35 @@ public interface Children {
      * @param user 
      * @return list of children folders
      */
-    ChildrenResult getFolderChildren(int maxItems, int skipCount, String user);
+    ChildrenResult getFolderChildren(Folder folder, int maxItems, int skipCount, String user);
 
     /**
-     * indicate if a child with the given name exists in this folder
-     * 
-     * @param name
-     *            name to check
-     * @return true if the name exists in the folderas child, false otherwise
+     * get all parent ids of this object visible for a user
+     * @param user
+     *      user who can see parents
+     * @return
+     *      list of folder ids
      */
-    boolean hasChild(String name);
+    public List<String> getParentIds(Filing spo, String user);
+    
+    /**
+     * Move an object to a different folder. 
+     * 
+     * @param so
+     *            object to be moved
+     * @param oldParent
+     *            old parent folder for the object
+     * @param newParent
+     *            new parent folder for the object
+     */
+    void move(StoredObject so, Folder oldParent, Folder newParent);
 
+    /**
+     * Rename an object
+     * @param so
+     *      object to be renamed
+     * @param newName
+     *      new name to be assigned
+     */
+    public void rename(Fileable so, String newName);
 }

@@ -186,7 +186,13 @@ public abstract class AbstractPortProvider {
         private Service createServiceObject() throws Exception {
             final Constructor<? extends Service> serviceConstructor = service.getServiceClass().getConstructor(
                     new Class<?>[] { URL.class, QName.class });
-            return serviceConstructor.newInstance(new Object[] { null, service.getQName() });
+
+            URL wsdlUrl = service.getPortClass().getResource("/wsdl/cmis11/CMISWS-Service.wsdl");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("WSDL URL: " + wsdlUrl.toExternalForm());
+            }
+
+            return serviceConstructor.newInstance(new Object[] { wsdlUrl, service.getQName() });
         }
 
         public CmisWebSerivcesService getService() {
@@ -640,6 +646,7 @@ public abstract class AbstractPortProvider {
     protected void setSoapAction(BindingProvider portObject, String soapAction, CmisVersion cmisVersion) {
         if (cmisVersion == CmisVersion.CMIS_1_0) {
             portObject.getRequestContext().put(BindingProvider.SOAPACTION_USE_PROPERTY, Boolean.FALSE);
+            portObject.getRequestContext().put(BindingProvider.SOAPACTION_URI_PROPERTY, "");
         } else {
             portObject.getRequestContext().put(BindingProvider.SOAPACTION_USE_PROPERTY, Boolean.TRUE);
             portObject.getRequestContext().put(BindingProvider.SOAPACTION_URI_PROPERTY, soapAction);

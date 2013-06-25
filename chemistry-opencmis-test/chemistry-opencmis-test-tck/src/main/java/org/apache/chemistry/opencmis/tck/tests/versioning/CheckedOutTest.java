@@ -19,6 +19,7 @@
 package org.apache.chemistry.opencmis.tck.tests.versioning;
 
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.FAILURE;
+import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.INFO;
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.WARNING;
 
 import java.util.Map;
@@ -27,8 +28,10 @@ import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.ItemIterable;
 import org.apache.chemistry.opencmis.client.api.ObjectId;
+import org.apache.chemistry.opencmis.client.api.OperationContext;
 import org.apache.chemistry.opencmis.client.api.Session;
 import org.apache.chemistry.opencmis.commons.definitions.DocumentTypeDefinition;
+import org.apache.chemistry.opencmis.commons.enums.CmisVersion;
 import org.apache.chemistry.opencmis.tck.CmisTestResult;
 import org.apache.chemistry.opencmis.tck.impl.AbstractSessionTest;
 
@@ -48,6 +51,10 @@ public class CheckedOutTest extends AbstractSessionTest {
     public void run(Session session) {
         CmisTestResult f;
 
+        boolean supportsOrderByName = isOrderByNameSupported(session);
+        OperationContext orderContext = (supportsOrderByName ? SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME
+                : SELECT_ALL_NO_CACHE_OC);
+
         Document pwc = null;
         try {
             // create folder and a checked-out document
@@ -63,7 +70,7 @@ public class CheckedOutTest extends AbstractSessionTest {
             }
 
             // test all checked-out documents
-            int sessionCheckedOut = checkPWCs(session, session.getCheckedOutDocs(SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME));
+            int sessionCheckedOut = checkPWCs(session, session.getCheckedOutDocs(orderContext), supportsOrderByName);
             addResult(createInfoResult(sessionCheckedOut + " checked out document(s) overall."));
 
             if (pwc != null) {
@@ -72,8 +79,8 @@ public class CheckedOutTest extends AbstractSessionTest {
             }
 
             // test checked-out documents in the test folder
-            int testFolderCheckedOut = checkPWCs(session,
-                    testFolder.getCheckedOutDocs(SELECT_ALL_NO_CACHE_OC_ORDER_BY_NAME));
+            int testFolderCheckedOut = checkPWCs(session, testFolder.getCheckedOutDocs(orderContext),
+                    supportsOrderByName);
             addResult(createInfoResult(testFolderCheckedOut + " checked out document(s) in the test folder."));
 
             if (pwc != null) {
@@ -95,7 +102,7 @@ public class CheckedOutTest extends AbstractSessionTest {
         }
     }
 
-    private int checkPWCs(Session session, ItemIterable<Document> pwcs) {
+    private int checkPWCs(Session session, ItemIterable<Document> pwcs, boolean checkOrder) {
         if (pwcs == null) {
             return 0;
         }
@@ -111,11 +118,20 @@ public class CheckedOutTest extends AbstractSessionTest {
             addResult(checkObject(session, pwc, propertiesToCheck, "PWC check: " + (pwc == null ? "?" : pwc.getId())));
 
             if (pwc != null) {
-                f = createResult(WARNING, "PWC is not the latest version! Id: " + pwc.getId()
-                        + " (Note: The words of the CMIS specification define that the PWC is the latest version."
-                        + " But that is not the intention of the spec and will be changed in CMIS 1.1."
-                        + " Thus this a warning, not an error.)");
-                addResult(assertIsTrue(pwc.isLatestVersion(), null, f));
+                if (session.getRepositoryInfo().getCmisVersion() == CmisVersion.CMIS_1_0) {
+                    f = createResult(WARNING, "PWC is not the latest version! Id: " + pwc.getId()
+                            + " (Note: The words of the CMIS specification define that the PWC is the latest version."
+                            + " But that is not the intention of the spec and will be changed in CMIS 1.1."
+                            + " Thus this a warning, not an error.)");
+                    addResult(assertIsTrue(pwc.isLatestVersion(), null, f));
+                } else {
+                    f = createResult(FAILURE, "The property value of 'cmis:isLatestVersion' is TRUE for a PWC! Id: "
+                            + pwc.getId());
+                    addResult(assertIsFalse(pwc.isLatestVersion(), null, f));
+                    f = createResult(FAILURE,
+                            "The property value of 'cmis:isLatestMajorVersion' is TRUE for a PWC! Id: " + pwc.getId());
+                    addResult(assertIsFalse(pwc.isLatestMajorVersion(), null, f));
+                }
 
                 if (lastName != null && pwc.getName() != null) {
                     if (pwc.getName().compareToIgnoreCase(lastName) < 0) {
@@ -129,9 +145,13 @@ public class CheckedOutTest extends AbstractSessionTest {
             i++;
         }
 
-        f = createResult(WARNING,
-                "Checked-out documents should be ordered by cmis:name, but they are not! (It might be a collation mismatch.)");
-        addResult(assertEquals(0, orderByNameIssues, null, f));
+        if (checkOrder) {
+            f = createResult(WARNING,
+                    "Checked-out documents should be ordered by cmis:name, but they are not! (It might be a collation mismatch.)");
+            addResult(assertEquals(0, orderByNameIssues, null, f));
+        } else {
+            addResult(createResult(INFO, "Repository doesn't support Order By for getCheckedOutDocs()."));
+        }
 
         return i;
     }
