@@ -456,10 +456,12 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // find the down links
         String link = loadLink(repositoryId, folderId, Constants.REL_DOWN, null);
+        String childrenLink = null;
 
         if (link != null) {
             // found only a children link, but no descendants link
             // -> try folder tree link
+            childrenLink = link;
             link = null;
         } else {
             // found no or two down links
@@ -476,7 +478,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         }
 
         if (link == null) {
-            link = loadLink(repositoryId, folderId, Constants.REL_DOWN, null);
+            link = childrenLink;
         }
 
         if (link == null) {
