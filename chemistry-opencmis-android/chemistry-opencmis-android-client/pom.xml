@@ -31,12 +31,12 @@
 		<parentBasedir>../../</parentBasedir>
 	</properties>
 
-
 	<dependencies>
 		<dependency>
 			<groupId>com.google.android</groupId>
 			<artifactId>android</artifactId>
 			<version>2.3.3</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
@@ -87,6 +87,7 @@
 										<exclude name="**/spi/LTPAWSSecurityAuthenticationProvider.*" />
 										<exclude name="**/spi/local/**" />
 										<exclude name="**/spi/http/DefaultHttpInvoker.*" />
+										<exclude name="**/spi/http/ApacheClientHttpInvoker.*" />
 										<exclude name="**/spi/webservices/**" />
 										<exclude name="**/spi/atompub/**" />
 									</fileset>
