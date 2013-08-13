@@ -39,6 +39,7 @@ import org.apache.chemistry.opencmis.commons.data.RepositoryInfo;
 import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
 import org.apache.chemistry.opencmis.commons.enums.BindingType;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisBaseException;
+import org.apache.chemistry.opencmis.commons.impl.IOUtils;
 import org.apache.chemistry.opencmis.commons.spi.CmisBinding;
 import org.apache.chemistry.opencmis.commons.spi.RepositoryService;
 import org.apache.chemistry.opencmis.tools.filecopy.FileCopier;
@@ -46,12 +47,9 @@ import org.apache.chemistry.opencmis.util.repository.MultiThreadedObjectGenerato
 import org.apache.chemistry.opencmis.util.repository.ObjectGenerator;
 import org.apache.chemistry.opencmis.util.repository.ObjectGenerator.CONTENT_KIND;
 import org.apache.chemistry.opencmis.util.repository.TimeLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ObjGenApp {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ObjGenApp.class.getName());
     private static final String PROP_USER = SessionParameter.USER;
     private static final String PROP_PASSWORD = SessionParameter.PASSWORD;
     private static final String DEFAULT_USER = "user";
@@ -185,15 +183,15 @@ public class ObjGenApp {
             } else {
                 fContentKind = null;
             }
-        } else if (kind.equals("static/text"))
+        } else if (kind.equals("static/text")) {
             fContentKind = ObjectGenerator.CONTENT_KIND.StaticText;
-        else if (kind.equals("lorem/text"))
+        } else if (kind.equals("lorem/text")) {
             fContentKind = ObjectGenerator.CONTENT_KIND.LoremIpsumText;
-        else if (kind.equals("lorem/html"))
+        } else if (kind.equals("lorem/html")) {
             fContentKind = ObjectGenerator.CONTENT_KIND.LoremIpsumHtml;
-        else if (kind.equals("fractal/jpeg"))
+        } else if (kind.equals("fractal/jpeg")) {
             fContentKind = ObjectGenerator.CONTENT_KIND.ImageFractalJpeg;
-        else {
+        } else {
             System.out.println("Unknown content kind: " + options.valueOf(fContentKindStr));
             System.out.println("  must be one of static/text, lorem/text, lorem/html, fractal/jpeg");
             usage(parser);
@@ -517,15 +515,8 @@ public class ObjGenApp {
             System.err.println("Error generating file: " + e);
             e.printStackTrace();
         } finally {
-            try {
-                if (null != is) {
-                    is.close();
-                }
-                if (null != os) {
-                    os.close();
-                }
-            } catch (IOException e) {
-            }
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(os);
         }
     }
 

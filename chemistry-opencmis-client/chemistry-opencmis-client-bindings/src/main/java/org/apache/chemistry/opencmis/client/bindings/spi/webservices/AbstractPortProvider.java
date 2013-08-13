@@ -57,6 +57,7 @@ import org.apache.chemistry.opencmis.commons.exceptions.CmisConnectionException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisProxyAuthenticationException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisUnauthorizedException;
+import org.apache.chemistry.opencmis.commons.impl.IOUtils;
 import org.apache.chemistry.opencmis.commons.impl.UrlBuilder;
 import org.apache.chemistry.opencmis.commons.impl.XMLUtils;
 import org.apache.chemistry.opencmis.commons.impl.jaxb.ACLService;
@@ -180,15 +181,14 @@ public abstract class AbstractPortProvider {
         private final URL endpointUrl;
 
         public CmisServiceHolder(final CmisWebSerivcesService service, final URL endpointUrl)
-                throws NoSuchMethodException, SecurityException, InstantiationException, InvocationTargetException,
-                IllegalAccessException {
+                throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
             this.service = service;
             this.endpointUrl = endpointUrl;
             this.serviceObject = new SoftReference<Service>(createServiceObject());
         }
 
-        private Service createServiceObject() throws NoSuchMethodException, SecurityException, InstantiationException,
-                InvocationTargetException, IllegalAccessException {
+        private Service createServiceObject() throws InstantiationException, IllegalAccessException,
+                InvocationTargetException, NoSuchMethodException {
             final Constructor<? extends Service> serviceConstructor = service.getServiceClass().getConstructor(
                     new Class<?>[] { URL.class, QName.class });
 
@@ -214,7 +214,8 @@ public abstract class AbstractPortProvider {
             return service;
         }
 
-        public Service getServiceObject() throws Exception {
+        public Service getServiceObject() throws InstantiationException, IllegalAccessException,
+                InvocationTargetException, NoSuchMethodException {
             Service result = serviceObject.get();
             if (result == null) {
                 result = createServiceObject();
@@ -234,9 +235,9 @@ public abstract class AbstractPortProvider {
     }
 
     private BindingSession session;
-    protected boolean useCompression;
-    protected boolean useClientCompression;
-    protected String acceptLanguage;
+    private boolean useCompression;
+    private boolean useClientCompression;
+    private String acceptLanguage;
 
     private final ReentrantLock portObjectLock = new ReentrantLock();
     private final EnumMap<CmisWebSerivcesService, LinkedList<SoftReference<BindingProvider>>> portObjectCache = new EnumMap<CmisWebSerivcesService, LinkedList<SoftReference<BindingProvider>>>(
@@ -258,6 +259,18 @@ public abstract class AbstractPortProvider {
         if (session.get(CmisBindingsHelper.ACCEPT_LANGUAGE) instanceof String) {
             acceptLanguage = session.get(CmisBindingsHelper.ACCEPT_LANGUAGE).toString();
         }
+    }
+
+    public boolean useCompression() {
+        return useCompression;
+    }
+
+    public boolean useClientCompression() {
+        return useClientCompression;
+    }
+
+    public String getAcceptLanguage() {
+        return acceptLanguage;
     }
 
     /**
@@ -573,8 +586,7 @@ public abstract class AbstractPortProvider {
                     continue;
                 }
 
-                NodeList portList = ((Element) serviceNode).getElementsByTagNameNS("http://schemas.xmlsoap.org/wsdl/",
-                        "port");
+                NodeList portList = serviceNode.getElementsByTagNameNS("http://schemas.xmlsoap.org/wsdl/", "port");
                 if (portList.getLength() < 1) {
                     throw new CmisRuntimeException("This service has no ports: " + service.getServiceName());
                 }
@@ -610,11 +622,7 @@ public abstract class AbstractPortProvider {
         } catch (IOException ioe) {
             throw new CmisRuntimeException("Cannot read this WSDL: " + wsdlUrl, ioe);
         } finally {
-            try {
-                wsdlStream.close();
-            } catch (IOException ioe) {
-                // ignore, there is nothing we can do
-            }
+            IOUtils.closeQuietly(wsdlStream);
         }
     }
 

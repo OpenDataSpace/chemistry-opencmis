@@ -20,7 +20,10 @@
  */
 package org.apache.chemistry.opencmis.server.support;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +54,8 @@ import org.apache.chemistry.opencmis.commons.definitions.PropertyStringDefinitio
 import org.apache.chemistry.opencmis.commons.definitions.PropertyUriDefinition;
 import org.apache.chemistry.opencmis.commons.definitions.RelationshipTypeDefinition;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
+import org.apache.chemistry.opencmis.commons.definitions.TypeDefinitionContainer;
+import org.apache.chemistry.opencmis.commons.definitions.TypeDefinitionList;
 import org.apache.chemistry.opencmis.commons.definitions.TypeMutability;
 import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
 import org.apache.chemistry.opencmis.commons.enums.Cardinality;
@@ -58,6 +63,8 @@ import org.apache.chemistry.opencmis.commons.enums.CmisVersion;
 import org.apache.chemistry.opencmis.commons.enums.ContentStreamAllowed;
 import org.apache.chemistry.opencmis.commons.enums.PropertyType;
 import org.apache.chemistry.opencmis.commons.enums.Updatability;
+import org.apache.chemistry.opencmis.commons.exceptions.CmisInvalidArgumentException;
+import org.apache.chemistry.opencmis.commons.exceptions.CmisObjectNotFoundException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.ChoiceImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.CmisExtensionElementImpl;
@@ -75,7 +82,10 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyStringDefi
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyUriDefinitionImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.RelationshipTypeDefinitionImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.SecondaryTypeDefinitionImpl;
+import org.apache.chemistry.opencmis.commons.impl.dataobjects.TypeDefinitionContainerImpl;
+import org.apache.chemistry.opencmis.commons.impl.dataobjects.TypeDefinitionListImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.TypeMutabilityImpl;
+import org.apache.chemistry.opencmis.commons.spi.RepositoryService;
 
 /**
  * Type definition factory.
@@ -599,6 +609,151 @@ public class TypeDefinitionFactory {
         }
 
         return childType;
+    }
+
+    /**
+     * Creates a {@link TypeDefinitionList} for
+     * {@link RepositoryService#getTypeChildren(String, String, Boolean, BigInteger, BigInteger, ExtensionsData)}
+     * .
+     */
+    public TypeDefinitionList createTypeDefinitionList(Map<String, TypeDefinition> allTypes, String typeId,
+            Boolean includePropertyDefinitions, BigInteger maxItems, BigInteger skipCount) {
+        if (typeId != null && !allTypes.containsKey(typeId)) {
+            throw new CmisObjectNotFoundException("Type '" + typeId + "' does not exist!");
+        }
+
+        TypeDefinitionListImpl result = new TypeDefinitionListImpl(Collections.<TypeDefinition> emptyList());
+        result.setHasMoreItems(false);
+        result.setNumItems(BigInteger.ZERO);
+
+        if (allTypes == null || allTypes.isEmpty()) {
+            return result;
+        }
+
+        int maxItemsInt = (maxItems == null ? Integer.MAX_VALUE : maxItems.intValue());
+        if (maxItemsInt <= 0) {
+            return result;
+        }
+
+        int skipCountInt = (skipCount == null ? 0 : skipCount.intValue());
+        if (skipCountInt < 0) {
+            skipCountInt = 0;
+        }
+        if (skipCountInt > allTypes.size()) {
+            return result;
+        }
+
+        boolean includePropertyDefinitionsBool = (includePropertyDefinitions == null ? false
+                : includePropertyDefinitions.booleanValue());
+
+        List<TypeDefinition> targetList = new ArrayList<TypeDefinition>();
+        for (TypeDefinition typeDef : allTypes.values()) {
+            if ((typeId == null && typeDef.getParentTypeId() == null)
+                    || (typeId != null && typeId.equals(typeDef.getParentTypeId()))) {
+                if (includePropertyDefinitionsBool) {
+                    targetList.add(typeDef);
+                } else {
+                    targetList.add(copy(typeDef, false));
+                }
+            }
+        }
+
+        Collections.sort(targetList, new Comparator<TypeDefinition>() {
+            public int compare(TypeDefinition td1, TypeDefinition td2) {
+                String pid1 = td1.getParentTypeId();
+                String pid2 = td2.getParentTypeId();
+                if (pid1 == null) {
+                    if (pid2 == null) {
+                        return td1.getId().compareTo(td2.getId());
+                    } else {
+                        return -1;
+                    }
+                } else {
+                    if (pid2 == null) {
+                        return 1;
+                    } else {
+                        int c = pid1.compareTo(pid2);
+                        if (c == 0) {
+                            return td1.getId().compareTo(td2.getId());
+                        }
+
+                        return c;
+                    }
+                }
+            }
+        });
+
+        result.setList(targetList.subList(skipCountInt, Math.min(skipCountInt + maxItemsInt, targetList.size())));
+        result.setNumItems(BigInteger.valueOf(targetList.size()));
+        result.setHasMoreItems(targetList.size() > skipCountInt + maxItemsInt);
+
+        return result;
+    }
+
+    /**
+     * Creates a list of {@link TypeDefinitionContainer} for
+     * {@link RepositoryService#getTypeDescendants(String, String, BigInteger, Boolean, ExtensionsData)}
+     * .
+     */
+    public List<TypeDefinitionContainer> createTypeDescendants(Map<String, TypeDefinition> allTypes, String typeId,
+            BigInteger depth, Boolean includePropertyDefinitions) {
+        int depthInt = (depth == null ? -1 : depth.intValue());
+        if (depthInt == 0) {
+            throw new CmisInvalidArgumentException("Depth must not be 0!");
+        }
+
+        if (typeId != null && !allTypes.containsKey(typeId)) {
+            throw new CmisObjectNotFoundException("Type '" + typeId + "' does not exist!");
+        }
+
+        if (allTypes == null || allTypes.isEmpty()) {
+            return Collections.<TypeDefinitionContainer> emptyList();
+        }
+
+        boolean includePropertyDefinitionsBool = (includePropertyDefinitions == null ? false
+                : includePropertyDefinitions.booleanValue());
+
+        Map<String, Set<String>> typeDefChildren = new HashMap<String, Set<String>>();
+
+        for (TypeDefinition typeDef : allTypes.values()) {
+            Set<String> children = typeDefChildren.get(typeDef.getParentTypeId());
+            if (children == null) {
+                children = new HashSet<String>();
+                typeDefChildren.put(typeDef.getParentTypeId(), children);
+            }
+            children.add(typeDef.getId());
+        }
+
+        Set<String> children = typeDefChildren.get(typeId);
+        if (children == null) {
+            return Collections.<TypeDefinitionContainer> emptyList();
+        }
+
+        List<TypeDefinitionContainer> result = new ArrayList<TypeDefinitionContainer>();
+        for (String child : children) {
+            result.add(createTypeDefinitionContainer(allTypes, typeDefChildren, child, depthInt - 1,
+                    includePropertyDefinitionsBool));
+        }
+
+        return result;
+    }
+
+    private TypeDefinitionContainer createTypeDefinitionContainer(Map<String, TypeDefinition> allTypes,
+            Map<String, Set<String>> typeDefChildren, String typeId, int depth, boolean includePropertyDefinitions) {
+        TypeDefinitionContainerImpl result = new TypeDefinitionContainerImpl();
+        result.setTypeDefinition(includePropertyDefinitions ? allTypes.get(typeId) : copy(allTypes.get(typeId), false));
+
+        if (depth != 0) {
+            if (typeDefChildren.containsKey(typeId)) {
+                for (String child : typeDefChildren.get(typeId)) {
+                    result.getChildren().add(
+                            createTypeDefinitionContainer(allTypes, typeDefChildren, child, depth < 0 ? -1 : depth - 1,
+                                    includePropertyDefinitions));
+                }
+            }
+        }
+
+        return result;
     }
 
     // --- copy methods ---

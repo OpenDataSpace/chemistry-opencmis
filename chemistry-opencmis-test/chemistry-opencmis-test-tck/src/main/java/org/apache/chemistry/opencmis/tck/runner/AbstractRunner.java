@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.chemistry.opencmis.commons.impl.ClassLoaderUtil;
+import org.apache.chemistry.opencmis.commons.impl.IOUtils;
 import org.apache.chemistry.opencmis.tck.CmisTest;
 import org.apache.chemistry.opencmis.tck.CmisTestGroup;
 import org.apache.chemistry.opencmis.tck.CmisTestProgressMonitor;
@@ -98,7 +99,7 @@ public abstract class AbstractRunner {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.startsWith("#") || line.length() == 0) {
+                if (line.length() == 0 || line.charAt(0) == '#') {
                     continue;
                 }
 
@@ -112,12 +113,7 @@ public abstract class AbstractRunner {
 
             setParameters(loadParams);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (Exception e) {
-                }
-            }
+            IOUtils.closeQuietly(reader);
         }
     }
 
@@ -197,19 +193,14 @@ public abstract class AbstractRunner {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.startsWith("#") || line.length() == 0) {
+                if (line.length() == 0 || line.charAt(0) == '#') {
                     continue;
                 }
 
                 addGroup(line);
             }
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (Exception e) {
-                }
-            }
+            IOUtils.closeQuietly(reader);
         }
     }
 

@@ -103,9 +103,9 @@ public class ExpertLoginTab extends AbstractLoginTab {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> parameter : parameters.entrySet()) {
             sb.append(parameter.getKey());
-            sb.append("=");
+            sb.append('=');
             sb.append(parameter.getValue());
-            sb.append("\n");
+            sb.append('\n');
         }
 
         sessionParameterTextArea.setText(sb.toString());
@@ -123,7 +123,7 @@ public class ExpertLoginTab extends AbstractLoginTab {
 
         for (String line : sessionParameterTextArea.getText().split("\n")) {
             line = line.trim();
-            if (line.startsWith("#") || (line.length() == 0)) {
+            if (line.length() == 0 || line.charAt(0) == '#') {
                 continue;
             }
 
