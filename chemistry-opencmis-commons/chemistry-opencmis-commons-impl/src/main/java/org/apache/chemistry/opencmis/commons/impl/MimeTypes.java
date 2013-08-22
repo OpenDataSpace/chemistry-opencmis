@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public final class MimeTypes {
 
     private static final Map<String, String> EXT2MIME = new HashMap<String, String>();
@@ -456,6 +457,8 @@ public final class MimeTypes {
         if (mime == null) {
             mime = EXT2MIME.get("");
         }
+
+        assert mime != null;
 
         return mime;
     }

@@ -23,6 +23,7 @@ package org.apache.chemistry.opencmis.util.content.fractal;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 final class FractalCalculator {
     private int[] colorMap;
@@ -48,7 +49,7 @@ final class FractalCalculator {
         newRect = complRect;
         imageWidth = imgWidth;
         imageHeight = imgHeight;
-        colorMap = colMap;
+        colorMap = Arrays.copyOf(colMap, colMap.length);
         numColors = colorMap.length;
         rRangeMin = newRect.getRMin();
         rRangeMax = newRect.getRMax();
@@ -72,10 +73,11 @@ final class FractalCalculator {
                 double zI = iRangeMin + (imageHeight - y) * delta;
 
                 // Is the point inside the set?
-                if (useJulia)
+                if (useJulia) {
                     noIterations[x][y] = testPointJuliaSet(zR, zI, maxIterations);
-                else
-                    noIterations[x][y] = testPointMandelbrot(zR, zI, maxIterations);            
+                } else {
+                    noIterations[x][y] = testPointMandelbrot(zR, zI, maxIterations);
+                }            
             }
         }
         return noIterations;

@@ -31,6 +31,7 @@ import java.awt.event.KeyListener;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.Format;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -217,7 +218,7 @@ public class PropertyEditorFrame extends JFrame {
 
     interface UpdateStatus {
         enum StatusFlag {
-            DontChange, Update, Unset
+            DONT_CHANGE, UPDATE, UNSET
         }
 
         void setStatus(StatusFlag status);
@@ -312,7 +313,7 @@ public class PropertyEditorFrame extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         addNewValue();
-                        setStatus(StatusFlag.Update);
+                        setStatus(StatusFlag.UPDATE);
                     }
                 });
                 addPanel.add(addButton, BorderLayout.LINE_END);
@@ -353,7 +354,7 @@ public class PropertyEditorFrame extends JFrame {
             add(valueField, getComponentCount() - 1);
 
             updatePositions();
-            setStatus(StatusFlag.Update);
+            setStatus(StatusFlag.UPDATE);
 
             revalidate();
         }
@@ -362,7 +363,7 @@ public class PropertyEditorFrame extends JFrame {
             remove(valueComponents.remove(pos));
 
             updatePositions();
-            setStatus(StatusFlag.Update);
+            setStatus(StatusFlag.UPDATE);
 
             revalidate();
         }
@@ -375,7 +376,7 @@ public class PropertyEditorFrame extends JFrame {
             add(comp, pos);
 
             updatePositions();
-            setStatus(StatusFlag.Update);
+            setStatus(StatusFlag.UPDATE);
 
             revalidate();
         }
@@ -388,7 +389,7 @@ public class PropertyEditorFrame extends JFrame {
             add(comp, pos + 2);
 
             updatePositions();
-            setStatus(StatusFlag.Update);
+            setStatus(StatusFlag.UPDATE);
 
             revalidate();
         }
@@ -400,7 +401,7 @@ public class PropertyEditorFrame extends JFrame {
         public Object getValue() {
             Object result = null;
 
-            if (getStatus() == StatusFlag.Update) {
+            if (getStatus() == StatusFlag.UPDATE) {
                 try {
                     if (propDef.getCardinality() == Cardinality.SINGLE) {
                         result = ((PropertyValue) valueComponents.get(0)).getPropertyValue();
@@ -420,15 +421,15 @@ public class PropertyEditorFrame extends JFrame {
         }
 
         public boolean includeInUpdate() {
-            return getStatus() != StatusFlag.DontChange;
+            return getStatus() != StatusFlag.DONT_CHANGE;
         }
 
         public void setStatus(StatusFlag status) {
             switch (status) {
-            case Update:
+            case UPDATE:
                 changeBox.setSelectedIndex(1);
                 break;
-            case Unset:
+            case UNSET:
                 changeBox.setSelectedIndex(2);
                 break;
             default:
@@ -439,11 +440,11 @@ public class PropertyEditorFrame extends JFrame {
         public StatusFlag getStatus() {
             switch (changeBox.getSelectedIndex()) {
             case 1:
-                return StatusFlag.Update;
+                return StatusFlag.UPDATE;
             case 2:
-                return StatusFlag.Unset;
+                return StatusFlag.UNSET;
             default:
-                return StatusFlag.DontChange;
+                return StatusFlag.DONT_CHANGE;
             }
         }
 
@@ -477,7 +478,7 @@ public class PropertyEditorFrame extends JFrame {
 
                 @Override
                 public void keyReleased(KeyEvent e) {
-                    status.setStatus(StatusFlag.Update);
+                    status.setStatus(StatusFlag.UPDATE);
                 }
 
                 @Override
@@ -511,7 +512,7 @@ public class PropertyEditorFrame extends JFrame {
 
                 @Override
                 public void keyReleased(KeyEvent e) {
-                    status.setStatus(StatusFlag.Update);
+                    status.setStatus(StatusFlag.UPDATE);
                 }
 
                 @Override
@@ -520,7 +521,7 @@ public class PropertyEditorFrame extends JFrame {
             });
         }
 
-        public Object getPropertyValue() throws Exception {
+        public Object getPropertyValue() throws ParseException {
             commitEdit();
             return getValue();
         }
@@ -544,7 +545,7 @@ public class PropertyEditorFrame extends JFrame {
             return result;
         }
 
-        public Object getPropertyValue() throws Exception {
+        public Object getPropertyValue() {
             return ((BigDecimal) super.getValue()).toBigIntegerExact();
         }
     }
@@ -580,7 +581,7 @@ public class PropertyEditorFrame extends JFrame {
             addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    status.setStatus(StatusFlag.Update);
+                    status.setStatus(StatusFlag.UPDATE);
                 }
             });
         }
@@ -671,7 +672,7 @@ public class PropertyEditorFrame extends JFrame {
             spinner.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
-                    status.setStatus(StatusFlag.Update);
+                    status.setStatus(StatusFlag.UPDATE);
                 }
             });
 

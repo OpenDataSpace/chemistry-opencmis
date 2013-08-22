@@ -18,6 +18,12 @@
  */
 package org.apache.chemistry.opencmis.jcr.type;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
 import org.apache.chemistry.opencmis.commons.exceptions.CmisObjectNotFoundException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
 import org.apache.chemistry.opencmis.jcr.JcrNode;
@@ -28,17 +34,12 @@ import org.apache.chemistry.opencmis.jcr.util.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Manages a set of registered type handlers.
  */
 public class JcrTypeHandlerManager {
 
-    private static final Logger log = LoggerFactory.getLogger(JcrTypeHandlerManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JcrTypeHandlerManager.class);
 
     private final PathManager pathManager;
     private final JcrTypeManager typeManager;
@@ -90,9 +91,8 @@ public class JcrTypeHandlerManager {
                         }
                     }
                     return false;
-                }
-                catch (RepositoryException e) {
-                    log.debug(e.getMessage(), e);
+                } catch (RepositoryException e) {
+                    LOG.debug(e.getMessage(), e);
                     throw new CmisRuntimeException(e.getMessage(), e);
                 }
             }
@@ -116,9 +116,8 @@ public class JcrTypeHandlerManager {
                 }
             }
             throw new CmisObjectNotFoundException("No object type for object '" + node.getIdentifier() + "'");
-        }
-        catch (RepositoryException e) {
-            log.debug(e.getMessage(), e);
+        } catch (RepositoryException e) {
+            LOG.debug(e.getMessage(), e);
             throw new CmisObjectNotFoundException(e.getMessage(), e);
         }
     }

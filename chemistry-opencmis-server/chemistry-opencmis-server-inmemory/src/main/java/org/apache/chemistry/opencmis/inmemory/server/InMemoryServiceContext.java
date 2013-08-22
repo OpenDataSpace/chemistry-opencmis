@@ -25,13 +25,13 @@ import org.apache.chemistry.opencmis.server.support.CmisServiceWrapper;
  * Helper class to associate context information with each incoming call
  *
  */
-public class InMemoryServiceContext {
+public final class InMemoryServiceContext {
     
-    private static class ContextHolder {
+    private static final class ContextHolder {
         private CmisServiceWrapper<InMemoryService> wrapper;
         private CallContext callContext;
 
-        ContextHolder(CmisServiceWrapper<InMemoryService> wrapper) {
+        private ContextHolder(CmisServiceWrapper<InMemoryService> wrapper) {
             this.wrapper = wrapper;
         }
 
@@ -50,6 +50,9 @@ public class InMemoryServiceContext {
     
     private static ThreadLocal<ContextHolder> threadLocalService = new ThreadLocal<ContextHolder>();
     
+    private InMemoryServiceContext() {
+    }
+    
     public static synchronized void setWrapperService(CmisServiceWrapper<InMemoryService> wrapperService) {
         threadLocalService.remove();
         if (null != wrapperService) {
@@ -60,9 +63,9 @@ public class InMemoryServiceContext {
     
     public static synchronized InMemoryService getCmisService() {
         ContextHolder holder = threadLocalService.get();
-        if (null == holder)
+        if (null == holder) {
             return null;
-        else {
+        } else {
             CmisServiceWrapper<InMemoryService> wrapperService = holder.getServiceWrapper();
             return wrapperService == null ? null : wrapperService.getWrappedService();
         }        
@@ -70,9 +73,9 @@ public class InMemoryServiceContext {
     
     public static synchronized void  setCallContext(CallContext context) {
         ContextHolder holder = threadLocalService.get();
-        if (null == holder)
+        if (null == holder) {
             throw new IllegalStateException("Cannot store call context, no service wrapper set.");
-        else {
+        } else {
             holder.setCallContext(context);
         }        
     }

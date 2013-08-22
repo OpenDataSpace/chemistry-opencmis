@@ -38,6 +38,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.chemistry.opencmis.commons.data.RepositoryInfo;
@@ -61,7 +62,6 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.TypeManagerCreatable
 import org.apache.chemistry.opencmis.inmemory.storedobj.impl.StoreManagerFactory;
 import org.apache.chemistry.opencmis.inmemory.storedobj.impl.StoreManagerImpl;
 import org.apache.chemistry.opencmis.server.support.CmisServiceWrapper;
-import org.apache.chemistry.opencmis.server.support.TypeManager;
 import org.apache.chemistry.opencmis.util.repository.ObjectGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,9 +73,8 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
     private static final BigInteger DEFAULT_MAX_ITEMS_TYPES = BigInteger.valueOf(100);
     private static final BigInteger DEFAULT_DEPTH_OBJECTS = BigInteger.valueOf(2);
     private static final BigInteger DEFAULT_DEPTH_TYPES = BigInteger.valueOf(-1);
-    private static CallContext OVERRIDE_CTX;
+    private static CallContext overrideCtx;
 
-    private Map<String, String> inMemoryServiceParameters;
     private boolean fUseOverrideCtx = false;
     private StoreManager storeManager; // singleton root of everything
     private CleanManager cleanManager = null;
@@ -88,18 +87,16 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
     @Override
     public void init(Map<String, String> parameters) {
         LOG.info("Initializing in-memory repository...");
+        LOG.debug("Init paramaters: " + parameters);
 
-        System.out.println(parameters);
-
-        inMemoryServiceParameters = parameters;
-        String overrideCtx = parameters.get(ConfigConstants.OVERRIDE_CALL_CONTEXT);
-        if (null != overrideCtx) {
+        String overrideCtxParam = parameters.get(ConfigConstants.OVERRIDE_CALL_CONTEXT);
+        if (null != overrideCtxParam) {
             fUseOverrideCtx = true;
         }
 
         ConfigurationSettings.init(parameters);
 
-        String repositoryClassName = (String) parameters.get(ConfigConstants.REPOSITORY_CLASS);
+        String repositoryClassName = parameters.get(ConfigConstants.REPOSITORY_CLASS);
         if (null == repositoryClassName) {
             repositoryClassName = StoreManagerImpl.class.getName();
         }
@@ -120,15 +117,17 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
 
         String encryptTempFilesStr = parameters.get(ConfigConstants.ENCRYPT_TEMP_FILES);
         encrypt = (encryptTempFilesStr == null ? super.encryptTempFiles() : Boolean.parseBoolean(encryptTempFilesStr));
-        
+
         Date deploymentTime = new Date();
         String strDate = new SimpleDateFormat("EEE MMM dd hh:mm:ss a z yyyy", Locale.US).format(deploymentTime);
 
         parameters.put(ConfigConstants.DEPLOYMENT_TIME, strDate);
 
-        initStorageManager(parameters);
+        boolean created = initStorageManager(parameters);
 
-        fillRepositoryIfConfigured(parameters);
+        if (created) {
+            fillRepositoryIfConfigured(parameters);
+        }
 
         Long cleanInterval = ConfigurationSettings
                 .getConfigurationValueAsLong(ConfigConstants.CLEAN_REPOSITORY_INTERVAL);
@@ -140,35 +139,35 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
     }
 
     public static void setOverrideCallContext(CallContext ctx) {
-        OVERRIDE_CTX = ctx;
+        overrideCtx = ctx;
     }
 
     @Override
     public CmisService getService(CallContext context) {
         LOG.debug("start getService()");
-
+        CallContext contextToUse = context;
         // Attach the CallContext to a thread local context that can be
         // accessed from everywhere
         // Some unit tests set their own context. So if we find one then we use
         // this one and ignore the provided one. Otherwise we set a new context.
-        if (fUseOverrideCtx && null != OVERRIDE_CTX) {
-            context = OVERRIDE_CTX;
+        if (fUseOverrideCtx && null != overrideCtx) {
+            contextToUse = overrideCtx;
         }
 
         InMemoryService inMemoryService = InMemoryServiceContext.getCmisService();
         if (inMemoryService == null) {
             LOG.debug("Creating new InMemoryService instance!");
             CmisServiceWrapper<InMemoryService> wrapperService;
-            inMemoryService = new InMemoryService(inMemoryServiceParameters, storeManager);
+            inMemoryService = new InMemoryService(storeManager);
             wrapperService = new CmisServiceWrapper<InMemoryService>(inMemoryService, DEFAULT_MAX_ITEMS_TYPES,
                     DEFAULT_DEPTH_TYPES, DEFAULT_MAX_ITEMS_OBJECTS, DEFAULT_DEPTH_OBJECTS);
             InMemoryServiceContext.setWrapperService(wrapperService);
         }
 
-        inMemoryService.setCallContext(context);
+        inMemoryService.setCallContext(contextToUse);
 
         LOG.debug("stop getService()");
-        return inMemoryService; // wrapperService;
+        return inMemoryService;
     }
 
     @Override
@@ -204,9 +203,10 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
         return storeManager;
     }
 
-    private void initStorageManager(Map<String, String> parameters) {
+    private boolean initStorageManager(Map<String, String> parameters) {
         // initialize in-memory management
-        String repositoryClassName = (String) parameters.get(ConfigConstants.REPOSITORY_CLASS);
+        boolean created = false;
+        String repositoryClassName = parameters.get(ConfigConstants.REPOSITORY_CLASS);
         if (null == repositoryClassName) {
             repositoryClassName = StoreManagerImpl.class.getName();
         }
@@ -231,24 +231,21 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
             } else {
                 String typeCreatorClassName = parameters.get(ConfigConstants.TYPE_CREATOR_CLASS);
                 storeManager.createAndInitRepository(repositoryId, typeCreatorClassName);
+                created = true;
             }
         }
 
         // check if a type definitions XML file is configured. if yes import
         // type definitions
         String typeDefsFileName = parameters.get(ConfigConstants.TYPE_XML);
-        if (null == typeDefsFileName)
+        if (null == typeDefsFileName) {
             LOG.info("No file name for type definitions given, no types will be created.");
-        else {
-            TypeManager typeManager = storeManager.getTypeManager(repositoryId);
-            if (typeManager instanceof TypeManagerCreatable) {
-                TypeManagerCreatable tmc = (TypeManagerCreatable) typeManager;
-                importTypesFromFile(tmc, typeDefsFileName);
-            } else {
-                LOG.warn("Type Definitions are configured in XML file but type manager cannot create types. Type definitions are ignored.");
-            }
+        } else {
+            TypeManagerCreatable typeManager = storeManager.getTypeManager(repositoryId);
+            TypeManagerCreatable tmc = (TypeManagerCreatable) typeManager;
+            importTypesFromFile(tmc, typeDefsFileName);
         }
-
+        return created;
     }
 
     private void importTypesFromFile(TypeManagerCreatable tmc, String typeDefsFileName) {
@@ -270,7 +267,7 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
             // walk through all nested tags in top element
             while (true) {
                 int event = parser.getEventType();
-                if (event == XMLStreamReader.START_ELEMENT) {
+                if (event == XMLStreamConstants.START_ELEMENT) {
                     QName name = parser.getName();
                     if (name.getLocalPart().equals("type")) {
                         typeDef = XMLConverter.convertTypeDefinition(parser);
@@ -280,9 +277,9 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
                                     .setPropertyDefinitions(new LinkedHashMap<String, PropertyDefinition<?>>());
                         }
                         tmc.addTypeDefinition(typeDef, false);
-                    } 
+                    }
                     XMLUtils.next(parser);
-                } else if (event == XMLStreamReader.END_ELEMENT) {
+                } else if (event == XMLStreamConstants.END_ELEMENT) {
                     break;
                 } else {
                     if (!next(parser)) {
@@ -323,79 +320,77 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
         class DummyCallContext implements CallContext {
 
             @Override
-			public String get(String key) {
+            public String get(String key) {
                 return null;
             }
 
             @Override
-			public String getBinding() {
+            public String getBinding() {
                 return null;
             }
 
             @Override
-			public boolean isObjectInfoRequired() {
+            public boolean isObjectInfoRequired() {
                 return false;
             }
 
             @Override
-			public CmisVersion getCmisVersion() {
+            public CmisVersion getCmisVersion() {
                 return CmisVersion.CMIS_1_1;
             }
 
             @Override
-			public String getRepositoryId() {
+            public String getRepositoryId() {
                 return null;
             }
 
             @Override
-			public String getLocale() {
+            public String getLocale() {
                 return null;
             }
 
             @Override
-			public BigInteger getOffset() {
+            public BigInteger getOffset() {
                 return null;
             }
 
             @Override
-			public BigInteger getLength() {
+            public BigInteger getLength() {
                 return null;
             }
 
             @Override
-			public String getPassword() {
+            public String getPassword() {
                 return null;
             }
 
             @Override
-			public String getUsername() {
+            public String getUsername() {
                 return null;
             }
 
             @Override
-			public File getTempDirectory() {
+            public File getTempDirectory() {
 
                 return tempDir;
             }
 
             @Override
-			public boolean encryptTempFiles() {
+            public boolean encryptTempFiles() {
                 return encrypt;
             }
 
             @Override
-			public int getMemoryThreshold() {
+            public int getMemoryThreshold() {
                 return memoryThreshold;
             }
 
             @Override
-			public long getMaxContentSize() {
+            public long getMaxContentSize() {
                 return maxContentSize;
             }
         }
 
-        // List<String> allAvailableRepositories =
-        // storeManager.getAllRepositoryIds();
         String repositoryId = parameters.get(ConfigConstants.REPOSITORY_ID);
         String doFillRepositoryStr = parameters.get(ConfigConstants.USE_REPOSITORY_FILER);
         String contentKindStr = parameters.get(ConfigConstants.CONTENT_KIND);
@@ -406,7 +401,7 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
             // create an initial temporary service instance to fill the
             // repository
 
-            InMemoryService svc = new InMemoryService(inMemoryServiceParameters, storeManager);
+            InMemoryService svc = new InMemoryService(storeManager);
 
             BindingsObjectFactory objectFactory = new BindingsObjectFactoryImpl();
 
@@ -444,20 +439,21 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
                 contentSizeKB = Integer.parseInt(contentSizeKBStr);
             }
 
-            ObjectGenerator.CONTENT_KIND contentKind;
-            if (null == contentKindStr)
-                contentKind = ObjectGenerator.CONTENT_KIND.LoremIpsumText;
-            else {
-                if (contentKindStr.equals("static/text"))
-                    contentKind = ObjectGenerator.CONTENT_KIND.StaticText;
-                else if (contentKindStr.equals("lorem/text"))
-                    contentKind = ObjectGenerator.CONTENT_KIND.LoremIpsumText;
-                else if (contentKindStr.equals("lorem/html"))
-                    contentKind = ObjectGenerator.CONTENT_KIND.LoremIpsumHtml;
-                else if (contentKindStr.equals("fractal/jpeg"))
-                    contentKind = ObjectGenerator.CONTENT_KIND.ImageFractalJpeg;
-                else
-                    contentKind = ObjectGenerator.CONTENT_KIND.StaticText;
+            ObjectGenerator.ContentKind contentKind;
+            if (null == contentKindStr) {
+                contentKind = ObjectGenerator.ContentKind.LOREM_IPSUM_TEXT;
+            } else {
+                if (contentKindStr.equals("static/text")) {
+                    contentKind = ObjectGenerator.ContentKind.STATIC_TEXT;
+                } else if (contentKindStr.equals("lorem/text")) {
+                    contentKind = ObjectGenerator.ContentKind.LOREM_IPSUM_TEXT;
+                } else if (contentKindStr.equals("lorem/html")) {
+                    contentKind = ObjectGenerator.ContentKind.LOREM_IPSUM_HTML;
+                } else if (contentKindStr.equals("fractal/jpeg")) {
+                    contentKind = ObjectGenerator.ContentKind.IMAGE_FRACTAL_JPEG;
+                } else {
+                    contentKind = ObjectGenerator.ContentKind.STATIC_TEXT;
+                }
             }
             // Create a hierarchy of folders and fill it with some documents
             ObjectGenerator gen = new ObjectGenerator(objectFactory, svc, svc, svc, repositoryId, contentKind);
@@ -506,8 +502,7 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
                 // Dump the tree
                 gen.dumpFolder(rootFolderId, "*");
             } catch (Exception e) {
-                LOG.error("Could not create folder hierarchy with documents. " + e);
-                e.printStackTrace();
+                LOG.error("Could not create folder hierarchy with documents. ", e);
             }
             destroy();
         } // if
@@ -517,13 +512,13 @@ public class InMemoryServiceFactoryImpl extends AbstractServiceFactory {
     class CleanManager {
 
         private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        ScheduledFuture<?> cleanerHandle = null;
+        private ScheduledFuture<?> cleanerHandle = null;
 
         public void startCleanRepositoryJob(long intervalInMinutes) {
 
             final Runnable cleaner = new Runnable() {
                 @Override
-				public void run() {
+                public void run() {
                     LOG.info("Cleaning repository as part of a scheduled maintenance job.");
                     for (String repositoryId : storeManager.getAllRepositoryIds()) {
                         ObjectStore store = storeManager.getObjectStore(repositoryId);

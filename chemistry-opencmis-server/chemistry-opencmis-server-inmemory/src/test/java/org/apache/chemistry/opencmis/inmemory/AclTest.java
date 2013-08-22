@@ -36,9 +36,9 @@ import org.apache.chemistry.opencmis.commons.impl.jaxb.EnumBasicPermissions;
 import org.apache.chemistry.opencmis.inmemory.storedobj.impl.InMemoryAce;
 import org.apache.chemistry.opencmis.inmemory.storedobj.impl.InMemoryAcl;
 import org.apache.chemistry.opencmis.inmemory.storedobj.impl.Permission;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Test;
 
 public class AclTest {
 
@@ -262,7 +262,12 @@ public class AclTest {
     @Test
     public void testCloneAcl() {
         InMemoryAcl acl = createDefaultAcl();
-        InMemoryAcl acl2 = acl.clone();
+        InMemoryAcl acl2 = null;
+        try {
+            acl2 = acl.clone();
+        } catch (CloneNotSupportedException e) {
+            fail("Clone not supported");
+        }
         assertFalse(acl == acl2);
         assertEquals(acl, acl2);
     }
@@ -291,8 +296,9 @@ public class AclTest {
 
     private boolean hasCommonsAce(Acl acl, String principalId, String permission) {
         for (Ace ace : acl.getAces()) {
-            if (ace.getPrincipalId().equals(principalId) && ace.getPermissions().get(0).equals(permission))
+            if (ace.getPrincipalId().equals(principalId) && ace.getPermissions().get(0).equals(permission)) {
                 return true;
+            }
         }
         return false;
         

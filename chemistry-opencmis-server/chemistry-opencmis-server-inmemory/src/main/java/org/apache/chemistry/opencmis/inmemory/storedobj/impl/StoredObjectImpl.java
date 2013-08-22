@@ -37,6 +37,7 @@ import org.apache.chemistry.opencmis.commons.data.AllowableActions;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
 import org.apache.chemistry.opencmis.commons.data.PropertyData;
 import org.apache.chemistry.opencmis.commons.data.RenditionData;
+import org.apache.chemistry.opencmis.commons.impl.IOUtils;
 import org.apache.chemistry.opencmis.commons.spi.BindingsObjectFactory;
 import org.apache.chemistry.opencmis.inmemory.DataObjectCreator;
 import org.apache.chemistry.opencmis.inmemory.FilterParser;
@@ -50,6 +51,8 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.StoredObject;
  */
 public class StoredObjectImpl implements StoredObject {
 
+    private static final int BUFFER_SIZE = 65536;
+    private static final String UNKNOWN_USER = "unknown";
     public static final String RENDITION_MIME_TYPE_JPEG = "image/jpeg";
     public static final String RENDITION_MIME_TYPE_PNG = "image/png";
     public static final String RENDITION_SUFFIX = "-rendition";
@@ -165,10 +168,11 @@ public class StoredObjectImpl implements StoredObject {
 
     @Override
     public List<String> getAppliedPolicies() {
-        if (null == policyIds)
+        if (null == policyIds) {
             return null;
-        else
+        } else {
             return Collections.unmodifiableList(policyIds);
+        }
     }
 
     public void setAppliedPolicies(List<String> newPolicies) {
@@ -260,12 +264,7 @@ public class StoredObjectImpl implements StoredObject {
             properties.put(PropertyIds.OBJECT_TYPE_ID,
                     objFactory.createPropertyIdData(PropertyIds.OBJECT_TYPE_ID, getTypeId()));
         }
-        // set the base type id outside becaus it requires the type definition
-        // if (FilterParser.isContainedInFilter(PropertyIds.CMIS_BASE_TYPE_ID,
-        // requestedIds)) {
-        // properties.add(objFactory.createPropertyIdData(PropertyIds.
-        // CMIS_BASE_TYPE_ID, getBaseTypeId()));
-        // }
+        // set the base type id PropertyIds.CMIS_BASE_TYPE_ID outside because it requires the type definition
         if (FilterParser.isContainedInFilter(PropertyIds.CREATED_BY, requestedIds)) {
             properties.put(PropertyIds.CREATED_BY,
                     objFactory.createPropertyStringData(PropertyIds.CREATED_BY, getCreatedBy()));
@@ -314,11 +313,10 @@ public class StoredObjectImpl implements StoredObject {
 
     @Override
     public void setCustomProperties(Map<String, PropertyData<?>> properties) {
-        properties = new HashMap<String, PropertyData<?>>(properties); // get a
-        // writable
-        // collection
-        removeAllSystemProperties(properties);
-        setProperties(properties);
+        Map<String, PropertyData<?>> propertiesNew = new HashMap<String, PropertyData<?>>(properties); 
+        // get a writablecollection
+        removeAllSystemProperties(propertiesNew);
+        setProperties(propertiesNew);
     }
 
     private static GregorianCalendar getNow() {
@@ -334,16 +332,17 @@ public class StoredObjectImpl implements StoredObject {
     @SuppressWarnings("unchecked")
     private void addSystemBaseProperties(Map<String, PropertyData<?>> properties, String user, boolean isCreated) {
         if (user == null) {
-            user = "unknown";
+            user = UNKNOWN_USER;
         }
 
         // Note that initial creation and modification date is set in
         // constructor.
         setModifiedBy(user);
         if (null != properties) {
-           if (null != properties.get(PropertyIds.DESCRIPTION))
-               setDescription((String) properties.get(PropertyIds.DESCRIPTION)
+           if (null != properties.get(PropertyIds.DESCRIPTION)) {
+            setDescription((String) properties.get(PropertyIds.DESCRIPTION)
                        .getFirstValue());
+        }
 
            if (null != properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS)) {
                secondaryTypeIds.clear();
@@ -521,35 +520,41 @@ public class StoredObjectImpl implements StoredObject {
 
     protected ContentStream getIconFromResourceDir(String name) throws IOException {
 
-        InputStream imageStream = this.getClass().getResourceAsStream(name);
+        InputStream imageStream = StoredObjectImpl.class.getResourceAsStream(name);
+        ByteArrayOutputStream ba = new ByteArrayOutputStream();
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int noBytesRead = 0;
+
+        try {
+            while ((noBytesRead = imageStream.read(buffer)) >= 0) {
+                ba.write(buffer, 0, noBytesRead);
+            }
+        } finally {
+            IOUtils.closeQuietly(ba);
+            IOUtils.closeQuietly(imageStream);
+        }
+        
         ContentStreamDataImpl content = new ContentStreamDataImpl(0);
         content.setFileName(name);
         content.setMimeType("image/png");
-
-        ByteArrayOutputStream ba = new ByteArrayOutputStream();
-        byte[] buffer = new byte[65536];
-        int noBytesRead = 0;
-
-        while ((noBytesRead = imageStream.read(buffer)) >= 0) {
-            ba.write(buffer, 0, noBytesRead);
-        }
-
         content.setContent(new ByteArrayInputStream(ba.toByteArray()));
         return content;
     }
 
     protected boolean testRenditionFilterForImage(String[] formats) {
-        if (formats.length == 1 && null != formats[0] && formats[0].equals("cmis:none"))
+        if (formats.length == 1 && null != formats[0] && formats[0].equals("cmis:none")) {
             return false;
-        else
+        } else {
             return arrayContainsString(formats, "*") || arrayContainsString(formats, "image/*")
                     || arrayContainsString(formats, "image/jpeg");
+        }
     }
 
     private boolean arrayContainsString(String[] formats, String val) {
         for (String s : formats) {
-            if (val.equals(s))
+            if (val.equals(s)) {
                 return true;
+            }
         }
         return false;
     }

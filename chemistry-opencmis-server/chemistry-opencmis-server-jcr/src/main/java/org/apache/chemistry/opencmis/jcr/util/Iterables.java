@@ -19,14 +19,15 @@
 
 package org.apache.chemistry.opencmis.jcr.util;
 
+import java.util.Iterator;
+
 import org.apache.commons.collections.iterators.EmptyIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
 import org.apache.commons.collections.iterators.SingletonIterator;
 
-import java.util.Iterator;
-
 public class Iterables {
-    private Iterables() {}
+    private Iterables() {
+    }
 
     public static <T> Iterable<T> concat(final Iterable<T> it1, final Iterable<T> it2) {
         return new Iterable<T>() {

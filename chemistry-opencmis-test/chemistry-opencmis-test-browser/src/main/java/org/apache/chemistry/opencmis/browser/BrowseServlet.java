@@ -57,7 +57,7 @@ public class BrowseServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger log = LoggerFactory.getLogger(BrowseServlet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BrowseServlet.class);
 
     private static final String CONTEXT_PREFIX = "{ctx}";
     private static final String PARAM_URL = "url";
@@ -91,7 +91,7 @@ public class BrowseServlet extends HttpServlet {
             builderFactory.setNamespaceAware(true);
             builder = builderFactory.newDocumentBuilder();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
             return;
         }
 
@@ -116,9 +116,9 @@ public class BrowseServlet extends HttpServlet {
                         Document xslDoc = builder.parse(stream);
                         addStylesheet(stylesheetKey, new DOMSource(xslDoc), isOverride);
 
-                        log.info("Stylesheet: '" + stylesheetKey + "' -> '" + stylesheetFileName + "'");
+                        LOG.info("Stylesheet: '" + stylesheetKey + "' -> '" + stylesheetFileName + "'");
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOG.error(e.getMessage(), e);
                     }
                 }
             }
@@ -127,13 +127,13 @@ public class BrowseServlet extends HttpServlet {
         String initAuxRoot = config.getInitParameter(INIT_PARAM_AUXROOT);
         if (initAuxRoot != null) {
             fAuxRoot = initAuxRoot;
-            log.info("Auxiliary root: " + fAuxRoot);
+            LOG.info("Auxiliary root: " + fAuxRoot);
         }
 
         String initAllow = config.getInitParameter(INIT_PARAM_ALLOW);
         if (initAllow != null) {
             fAllow = initAllow;
-            log.info("Allow pattern: " + fAllow);
+            LOG.info("Allow pattern: " + fAllow);
         }
     }
 
@@ -211,8 +211,8 @@ public class BrowseServlet extends HttpServlet {
             }
 
             // debug messages
-            if (log.isDebugEnabled()) {
-                log.debug("'" + browseUrl + "' -> '" + conn.getContentType() + "'");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("'" + browseUrl + "' -> '" + conn.getContentType() + "'");
             }
 
             // find stylesheet

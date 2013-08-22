@@ -46,17 +46,11 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.StoredObject;
 import org.apache.chemistry.opencmis.inmemory.storedobj.api.VersionedDocument;
 import org.apache.chemistry.opencmis.inmemory.types.PropertyCreationHelper;
 import org.apache.chemistry.opencmis.server.support.TypeManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InMemoryVersioningServiceImpl extends InMemoryAbstractServiceImpl {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InMemoryVersioningServiceImpl.class.getName());
-
-    final InMemoryObjectServiceImpl fObjectService; // real implementation of
-                                                    // the
-    // service
-    final AtomLinkInfoProvider fAtomLinkProvider;
+    private InMemoryObjectServiceImpl fObjectService; 
+    private AtomLinkInfoProvider fAtomLinkProvider;
 
     public InMemoryVersioningServiceImpl(StoreManager storeManager, InMemoryObjectServiceImpl objectService) {
         super(storeManager);
@@ -75,30 +69,32 @@ public class InMemoryVersioningServiceImpl extends InMemoryAbstractServiceImpl {
         objStore.deleteVersion(pwc);
 
         // if this is the last version delete the document itself
-        if (verDoc.getAllVersions().size() == 0)
+        if (verDoc.getAllVersions().size() == 0) {
             fStoreManager.getObjectStore(repositoryId).deleteObject(verDoc.getId(), true, user);
+        }
     }
 
-    public void checkIn(CallContext context, String repositoryId, Holder<String> objectId, Boolean major,
-            Properties properties, ContentStream contentStream, String checkinComment, List<String> policies,
+    public void checkIn(CallContext context, String repositoryId, Holder<String> objectId, Boolean majorParam,
+            Properties properties, ContentStream contentStreamParam, String checkinComment, List<String> policies,
             Acl addAces, Acl removeAces, ExtensionsData extension, ObjectInfoHandler objectInfos) {
 
-        addAces = org.apache.chemistry.opencmis.inmemory.TypeValidator.expandAclMakros(context.getUsername(), addAces);
-        removeAces = org.apache.chemistry.opencmis.inmemory.TypeValidator.expandAclMakros(context.getUsername(),
+        Acl aclAdd = org.apache.chemistry.opencmis.inmemory.TypeValidator.expandAclMakros(context.getUsername(), addAces);
+        Acl aclRemove = org.apache.chemistry.opencmis.inmemory.TypeValidator.expandAclMakros(context.getUsername(),
                 removeAces);
 
-        StoredObject so = validator.checkIn(context, repositoryId, objectId, addAces, removeAces, policies, extension);
+        StoredObject so = validator.checkIn(context, repositoryId, objectId, aclAdd, aclRemove, policies, extension);
 
         String user = context.getUsername();
         VersionedDocument verDoc = testHasProperCheckedOutStatus(so, user);
 
         // check if the contentStream is a usable object or ignore it otherwise
-        // Note Bworser binding sets an empty object
-        if (contentStream != null && contentStream.getStream() == null)
+        // Note Browser binding sets an empty object
+        ContentStream contentStream = contentStreamParam;
+        if (contentStream != null && contentStream.getStream() == null) {
             contentStream = null;
+        }
 
-        if (null == major) 
-            major = true;
+        boolean major = (null == majorParam ? true : majorParam);
         
         verDoc.checkIn(major, properties, contentStream, checkinComment, policies, user);
         verDoc.updateSystemBasePropertiesWhenModified(null, context.getUsername());
@@ -147,8 +143,9 @@ public class InMemoryVersioningServiceImpl extends InMemoryAbstractServiceImpl {
         DocumentVersion pwc = verDoc.checkOut(content, user);
         objectStore.storeVersion(pwc);
         objectId.setValue(pwc.getId()); // return the id of the created pwc
-        if (null != contentCopied) // Note: always null in AtomPub binding
+        if (null != contentCopied) {
             contentCopied.setValue(true);
+        }
 
         // To be able to provide all Atom links in the response we need
         // additional information:
@@ -168,27 +165,23 @@ public class InMemoryVersioningServiceImpl extends InMemoryAbstractServiceImpl {
         // and objectId is null
         StoredObject so;
         List<ObjectData> res = new ArrayList<ObjectData>();
-        if (null == versionSeriesId)
-            versionSeriesId = objectId;
-        if (null == versionSeriesId)
-            throw new CmisInvalidArgumentException("getAllVersions requires a version series id, but it was null.");
-        so = validator.getAllVersions(context, repositoryId, objectId, versionSeriesId, extension);
-
-        if (null == objectId)
-            objectId = versionSeriesId;
+        String id = versionSeriesId;
+        if (null == versionSeriesId) {
+            if (null == objectId) {
+                throw new CmisInvalidArgumentException("getAllVersions requires a version series id, but it was null.");
+            }
+            id = objectId;
+        }
+        so = validator.getAllVersions(context, repositoryId, objectId, id, extension);
 
         if (!(so instanceof VersionedDocument)) {
-            if (!(so instanceof DocumentVersion))
+            if (!(so instanceof DocumentVersion)) {
                 throw new CmisInvalidArgumentException("getAllVersions requires an id of a versioned document.");
+            }
             so = ((DocumentVersion) so).getParentDocument();
         }
-        // ObjectData objData = getObject(context, repositoryId, so.getId(),
-        // filter, includeAllowableActions,
-        // IncludeRelationships.NONE,extension, objectInfos);
-        // res.add(objData);
 
         VersionedDocument verDoc = (VersionedDocument) so;
-        res = new ArrayList<ObjectData>();
         List<DocumentVersion> versions = verDoc.getAllVersions();
         for (DocumentVersion version : versions) {
             ObjectData objData = getObject(context, repositoryId, version.getId(), filter, includeAllowableActions,
@@ -198,8 +191,9 @@ public class InMemoryVersioningServiceImpl extends InMemoryAbstractServiceImpl {
 
         // reverse list of versions because spec expects latest version first
         List<ObjectData> temp = new ArrayList<ObjectData>(res.size());
-        for (ObjectData ver : res)
+        for (ObjectData ver : res) {
             temp.add(0, ver);
+        }
         res = temp;
 
         // provide information for Atom links for version series:

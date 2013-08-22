@@ -173,7 +173,12 @@ public final class JSONConverter {
     }
 
     public enum PropertyMode {
-        OBJECT, QUERY, CHANGE
+        /** object */
+        OBJECT,
+        /** query result */
+        QUERY,
+        /** change event */
+        CHANGE
     }
 
     /**
@@ -1168,12 +1173,19 @@ public final class JSONConverter {
         JSONObject result = new JSONObject();
 
         for (PropertyData<?> property : properties.getPropertyList()) {
+            assert property != null;
+            assert property.getId() != null;
+
             PropertyDefinition<?> propDef = null;
             if (typeCache != null) {
                 propDef = typeCache.getPropertyDefinition(property.getId());
             }
             if (propDef == null && type != null) {
                 propDef = type.getPropertyDefinitions().get(property.getId());
+            }
+            if (propDef == null && typeCache != null && objectId != null && propertyMode != PropertyMode.CHANGE) {
+                typeCache.getTypeDefinitionForObject(objectId);
+                propDef = typeCache.getPropertyDefinition(property.getId());
             }
 
             String propId = (propertyMode == PropertyMode.QUERY ? property.getQueryName() : property.getId());
@@ -1563,6 +1575,7 @@ public final class JSONConverter {
             setIfNotNull(JSON_PROPERTY_TYPE_MAX_LENGTH, ((PropertyStringDefinition) propertyDefinition).getMaxLength(),
                     result);
         } else if (propertyDefinition instanceof PropertyIdDefinition) {
+            // nothing to do
         } else if (propertyDefinition instanceof PropertyIntegerDefinition) {
             setIfNotNull(JSON_PROPERTY_TYPE_MIN_VALUE, ((PropertyIntegerDefinition) propertyDefinition).getMinValue(),
                     result);
@@ -1578,13 +1591,18 @@ public final class JSONConverter {
                 result.put(JSON_PROPERTY_TYPE_PRECISION, precision.value());
             }
         } else if (propertyDefinition instanceof PropertyBooleanDefinition) {
+            // nothing to do
         } else if (propertyDefinition instanceof PropertyDateTimeDefinition) {
             DateTimeResolution resolution = ((PropertyDateTimeDefinition) propertyDefinition).getDateTimeResolution();
             if (resolution != null) {
                 result.put(JSON_PROPERTY_TYPE_RESOLUTION, resolution.value());
             }
         } else if (propertyDefinition instanceof PropertyHtmlDefinition) {
+            // nothing to do
         } else if (propertyDefinition instanceof PropertyUriDefinition) {
+            // nothing to do
+        } else {
+            assert false;
         }
 
         // default value
@@ -1634,6 +1652,8 @@ public final class JSONConverter {
      * Converts choices.
      */
     private static <T> JSONArray convertChoices(final List<Choice<T>> choices, final Cardinality cardinality) {
+        assert cardinality != null;
+
         if (choices == null) {
             return null;
         }
@@ -2486,11 +2506,16 @@ public final class JSONConverter {
         }
 
         result.setObjects(objects);
-        result.setHasMoreItems(getBoolean(json, isQueryResult ? JSON_QUERYRESULTLIST_NUM_ITEMS
-                : JSON_OBJECTLIST_HAS_MORE_ITEMS));
-        result.setNumItems(getInteger(json, isQueryResult ? JSON_QUERYRESULTLIST_NUM_ITEMS : JSON_OBJECTLIST_NUM_ITEMS));
 
-        convertExtension(json, result, isQueryResult ? QUERYRESULTLIST_KEYS : OBJECTLIST_KEYS);
+        if (isQueryResult) {
+            result.setHasMoreItems(getBoolean(json, JSON_QUERYRESULTLIST_NUM_ITEMS));
+            result.setNumItems(getInteger(json, JSON_QUERYRESULTLIST_NUM_ITEMS));
+            convertExtension(json, result, QUERYRESULTLIST_KEYS);
+        } else {
+            result.setHasMoreItems(getBoolean(json, JSON_OBJECTLIST_HAS_MORE_ITEMS));
+            result.setNumItems(getInteger(json, JSON_OBJECTLIST_NUM_ITEMS));
+            convertExtension(json, result, OBJECTLIST_KEYS);
+        }
 
         return result;
     }
@@ -2806,6 +2831,7 @@ public final class JSONConverter {
                 return cal;
             }
             throw new CmisRuntimeException("Invalid DateTime value!");
+        default:
         }
 
         throw new CmisRuntimeException("Unkown property type!");

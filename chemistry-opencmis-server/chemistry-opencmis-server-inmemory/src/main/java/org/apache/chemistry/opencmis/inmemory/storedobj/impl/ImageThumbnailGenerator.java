@@ -36,6 +36,7 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.ContentStreamImpl;
 
 public class ImageThumbnailGenerator {
 
+    private static final int DEFAULT_LENGTH = 100;
     private static final String RENDITION_MIME_TYPE = "image/jpeg";;
     private InputStream image;
     private int thumbWidth;
@@ -74,12 +75,13 @@ public class ImageThumbnailGenerator {
         BufferedImage resizedImage;
         BufferedImage originalImage = ImageIO.read(stream);
 
-        if (width <= 0)
+        if (width <= 0) {
             resizedImage = scaleLongerSideTo(originalImage, height);
-        else if (height <= 0)
+        } else if (height <= 0) {
             resizedImage = scaleLongerSideTo(originalImage, width);
-        else
+        } else {
             resizedImage = scaleImage(originalImage, width, height);
+        }
         
         thumbWidth = resizedImage.getWidth();
         thumbHeight = resizedImage.getHeight();
@@ -87,11 +89,13 @@ public class ImageThumbnailGenerator {
         return storeImageinByteArray(resizedImage);
     }
     
-    private BufferedImage scaleLongerSideTo(BufferedImage bi, int longerSideLength) throws IOException {
+    private BufferedImage scaleLongerSideTo(BufferedImage bi, int longerSideLengthParam) throws IOException {
         int width, height;
+        int longerSideLength = longerSideLengthParam;
         
-        if (longerSideLength <= 0)
-            longerSideLength = 100;
+        if (longerSideLength <= 0) {
+            longerSideLength = DEFAULT_LENGTH;
+        }
         
         if (bi.getWidth() > bi.getHeight()) {
             width = longerSideLength;
@@ -108,7 +112,6 @@ public class ImageThumbnailGenerator {
     private BufferedImage scaleImage(BufferedImage originalImage, int width, int height) {
         
         BufferedImage resizedImage = new BufferedImage(width, height, originalImage.getType()); 
-        //        ColorSpace.TYPE_RGB);
         Graphics2D g = resizedImage.createGraphics();
 
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -126,10 +129,11 @@ public class ImageThumbnailGenerator {
         
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         boolean ok = ImageIO.write(bi, "JPG", os);
-        if (ok)
+        if (ok) {
             return os.toByteArray();
-        else
+        } else {
             return null;
+        }
     }
 
 }

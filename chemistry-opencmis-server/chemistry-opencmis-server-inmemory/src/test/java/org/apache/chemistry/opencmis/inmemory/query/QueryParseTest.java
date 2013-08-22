@@ -42,10 +42,10 @@ import org.apache.chemistry.opencmis.server.support.query.QueryObject;
 import org.apache.chemistry.opencmis.server.support.query.QueryObject.SortSpec;
 import org.apache.chemistry.opencmis.server.support.query.QueryUtilStrict;
 import org.apache.chemistry.opencmis.server.support.query.TextSearchLexer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QueryParseTest extends AbstractQueryTest {
 
@@ -494,7 +494,7 @@ public class QueryParseTest extends AbstractQueryTest {
     	try {
             checkTreeWhere(statement);    		
     	} catch (Exception e) {
-    		LOG.error("Exception is: ", e);
+    		LOG.debug("Exception is: ", e);
     		assertTrue(e instanceof CmisInvalidArgumentException);
     		assertTrue(e.getMessage().contains("illegal tokens after end"));
     	}
@@ -645,8 +645,9 @@ public class QueryParseTest extends AbstractQueryTest {
             for (int i=0; i<count; i++) {
                 Tree child = node.getChild(i);
                 node = findTextSearchNode(child); // recursive descent
-                if (null != node)
+                if (null != node) {
                     return node;
+                }
             }
             return null;
         }        

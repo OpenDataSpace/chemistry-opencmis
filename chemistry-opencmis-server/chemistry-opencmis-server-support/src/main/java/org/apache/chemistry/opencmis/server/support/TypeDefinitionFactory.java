@@ -90,7 +90,7 @@ import org.apache.chemistry.opencmis.commons.spi.RepositoryService;
 /**
  * Type definition factory.
  */
-public class TypeDefinitionFactory {
+public final class TypeDefinitionFactory {
 
     private static final Set<String> NEW_CMIS11_PROPERTIES = new HashSet<String>();
     static {
@@ -108,6 +108,7 @@ public class TypeDefinitionFactory {
 
     private String defaultNamespace;
     private boolean defaultControllableAcl;
+    private boolean defaultIsFullTextIndexed;
     private boolean defaultControllablePolicy;
     private boolean defaultQueryable;
     private boolean defaultFulltextIndexed;
@@ -269,6 +270,14 @@ public class TypeDefinitionFactory {
 
     public void setDefaultNamespace(String defaultNamespace) {
         this.defaultNamespace = defaultNamespace;
+    }
+
+    public boolean getDefaultIsFulltextIndexed() {
+        return defaultIsFullTextIndexed;
+    }
+
+    public void setDefaultIsFulltextIndexed(boolean defaultIsFullTextIndexed) {
+        this.defaultIsFullTextIndexed = defaultIsFullTextIndexed;
     }
 
     public boolean getDefaultControllableAcl() {

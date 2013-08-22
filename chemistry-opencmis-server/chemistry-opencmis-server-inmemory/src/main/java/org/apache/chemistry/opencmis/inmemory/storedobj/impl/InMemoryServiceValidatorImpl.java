@@ -91,19 +91,6 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
      * 
      * @see
      * org.apache.chemistry.opencmis.inmemory.server.BaseServiceValidatorImpl
-     * #checkRepositoryId(java.lang.String)
-     */
-    @Override
-    protected void checkRepositoryId(String repositoryId) {
-
-        super.checkRepositoryId(repositoryId);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.apache.chemistry.opencmis.inmemory.server.BaseServiceValidatorImpl
      * #checkParams(java.lang.String, java.lang.String, java.lang.String)
      */
     @Override
@@ -298,8 +285,9 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             ExtensionsData extension) {
 
         StoredObject so = super.getCheckedOutDocs(context, repositoryId, folderId, extension);
-        if (null != so)
+        if (null != so) {
             checkReadAccess(repositoryId, context.getUsername(), so);
+        }
         return so;
     }
 
@@ -317,8 +305,9 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             List<String> policyIds, ExtensionsData extension) {
 
         StoredObject folder = super.createDocument(context, repositoryId, folderId, policyIds, extension);
-        if (null != folder) // not if unfiled
+        if (null != folder) {
             checkWriteAccess(repositoryId, context.getUsername(), folder);
+        }
         return folder;
     }
 
@@ -393,17 +382,18 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
     public StoredObject createPolicy(CallContext context, String repositoryId, String folderId, Acl addAces,
             Acl removeAces, List<String> policyIds, ExtensionsData extension) {
 
-        if (policyIds != null && policyIds.size() > 0)
+        if (policyIds != null && policyIds.size() > 0) {
             throw new CmisConstraintException("Applying policies to policies is not supported.");
-        if (folderId != null && folderId.length() > 0)
+        }
+        if (folderId != null && folderId.length() > 0) {
             throw new CmisConstraintException("Policies cannot be created in folders.");
-        if (addAces != null || removeAces != null)
+        }
+        if (addAces != null || removeAces != null) {
             throw new CmisConstraintException("ACLs on policies are not suported.");
+        }
 
-        StoredObject so = super
-                .createPolicy(context, repositoryId, folderId, addAces, removeAces, policyIds, extension);
-        checkAllAccess(repositoryId, context.getUsername(), so);
-        return so;
+        super.createPolicy(context, repositoryId, null, null, null, null, extension);
+        return null;
     }
 
     @Override
@@ -411,8 +401,9 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             List<String> policyIds, Acl addAces, Acl removeAces, ExtensionsData extension) {
         StoredObject folder = super.createItem(context, repositoryId, properties, folderId, policyIds, addAces,
                 removeAces, extension);
-        if (null != folder) // not if unfiled
+        if (null != folder) {
             checkWriteAccess(repositoryId, context.getUsername(), folder);
+        }
         return folder;
     }
 
@@ -657,8 +648,6 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             ExtensionsData extension, Holder<Boolean> contentCopied) {
 
         StoredObject so = super.checkOut(context, repositoryId, objectId, extension, contentCopied);
-        // StoredObject container = so instanceof DocumentVersion ?
-        // ((DocumentVersion)so).getParentDocument() : so;
         checkWriteAccess(repositoryId, context.getUsername(), so);
         return so;
     }
@@ -677,8 +666,6 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             ExtensionsData extension) {
 
         StoredObject so = super.cancelCheckOut(context, repositoryId, objectId, extension);
-        // StoredObject container = so instanceof DocumentVersion ?
-        // ((DocumentVersion)so).getParentDocument() : so;
         checkWriteAccess(repositoryId, context.getUsername(), so);
         return so;
     }
@@ -697,12 +684,11 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
             Acl removeAces, List<String> policyIds, ExtensionsData extension) {
 
         StoredObject so = super.checkIn(context, repositoryId, objectId, addAces, removeAces, policyIds, extension);
-        // StoredObject container = so instanceof DocumentVersion ?
-        // ((DocumentVersion)so).getParentDocument() : so;
 
-        if (null != addAces || null != removeAces)
+        if (null != addAces || null != removeAces) {
             throw new CmisInvalidArgumentException(
                     "version specific ACLs are not supported, addAces and removeAces must be null.");
+        }
 
         checkWriteAccess(repositoryId, context.getUsername(), so);
         return so;
@@ -832,8 +818,9 @@ public class InMemoryServiceValidatorImpl extends BaseServiceValidatorImpl {
 
         StoredObject[] sos = super.removeObjectFromFolder(context, repositoryId, objectId, folderId, extension);
         checkWriteAccess(repositoryId, context.getUsername(), sos[0]);
-        if (null != folderId)
+        if (null != folderId) {
             checkWriteAccess(repositoryId, context.getUsername(), sos[1]);
+        }
         return sos;
     }
 

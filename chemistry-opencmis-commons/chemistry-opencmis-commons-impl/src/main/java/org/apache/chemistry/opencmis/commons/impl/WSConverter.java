@@ -273,26 +273,26 @@ public final class WSConverter {
 
     private static final Logger LOG = LoggerFactory.getLogger(WSConverter.class);
 
-    private static Class<?> STREAM_DATA_HANDLER_CLASS_1;
-    private static Method STREAM_DATA_HANDLER_READ_METHOD_1;
-    private static Class<?> STREAM_DATA_HANDLER_CLASS_2;
-    private static Method STREAM_DATA_HANDLER_READ_METHOD_2;
+    private static Class<?> streamDataHandlerClass1;
+    private static Method streamDataHandlerReadMethod1;
+    private static Class<?> streamDataHandlerClass2;
+    private static Method streamDataHandlerReadMethod2;
 
     static {
         try {
-            STREAM_DATA_HANDLER_CLASS_1 = Class.forName("org.jvnet.staxex.StreamingDataHandler");
-            STREAM_DATA_HANDLER_READ_METHOD_1 = STREAM_DATA_HANDLER_CLASS_1.getMethod("readOnce", new Class<?>[0]);
+            streamDataHandlerClass1 = Class.forName("org.jvnet.staxex.StreamingDataHandler");
+            streamDataHandlerReadMethod1 = streamDataHandlerClass1.getMethod("readOnce", new Class<?>[0]);
         } catch (Exception e) {
-            STREAM_DATA_HANDLER_CLASS_1 = null;
-            STREAM_DATA_HANDLER_READ_METHOD_1 = null;
+            streamDataHandlerClass1 = null;
+            streamDataHandlerReadMethod1 = null;
         }
 
         try {
-            STREAM_DATA_HANDLER_CLASS_2 = Class.forName("com.sun.xml.internal.org.jvnet.staxex.StreamingDataHandler");
-            STREAM_DATA_HANDLER_READ_METHOD_2 = STREAM_DATA_HANDLER_CLASS_2.getMethod("readOnce", new Class<?>[0]);
+            streamDataHandlerClass2 = Class.forName("com.sun.xml.internal.org.jvnet.staxex.StreamingDataHandler");
+            streamDataHandlerReadMethod2 = streamDataHandlerClass2.getMethod("readOnce", new Class<?>[0]);
         } catch (Exception e) {
-            STREAM_DATA_HANDLER_CLASS_2 = null;
-            STREAM_DATA_HANDLER_READ_METHOD_2 = null;
+            streamDataHandlerClass2 = null;
+            streamDataHandlerReadMethod2 = null;
         }
     }
 
@@ -1354,6 +1354,8 @@ public final class WSConverter {
      * Converts a choices list.
      */
     private static void convertChoiceDecimalList(List<Choice<BigDecimal>> choices, List<CmisChoiceDecimal> target) {
+        assert target != null;
+
         if (choices == null) {
             return;
         }
@@ -1401,6 +1403,8 @@ public final class WSConverter {
      * Converts a choices list.
      */
     private static void convertChoiceBooleanList(List<Choice<Boolean>> choices, List<CmisChoiceBoolean> target) {
+        assert target != null;
+
         if (choices == null) {
             return;
         }
@@ -1449,6 +1453,8 @@ public final class WSConverter {
      */
     private static void convertChoiceDateTimeList(List<Choice<GregorianCalendar>> choices,
             List<CmisChoiceDateTime> target) {
+        assert target != null;
+
         if (choices == null) {
             return;
         }
@@ -1496,6 +1502,8 @@ public final class WSConverter {
      * Converts a choices list.
      */
     private static void convertChoiceHtmlList(List<Choice<String>> choices, List<CmisChoiceHtml> target) {
+        assert target != null;
+
         if (choices == null) {
             return;
         }
@@ -1543,6 +1551,8 @@ public final class WSConverter {
      * Converts a choices list.
      */
     private static void convertChoiceUriList(List<Choice<String>> choices, List<CmisChoiceUri> target) {
+        assert target != null;
+
         if (choices == null) {
             return;
         }
@@ -2601,12 +2611,12 @@ public final class WSConverter {
         DataHandler streamDataHandler = contentStream.getStream();
         if (streamDataHandler != null) {
             try {
-                if (STREAM_DATA_HANDLER_CLASS_1 != null && STREAM_DATA_HANDLER_CLASS_1.isInstance(streamDataHandler)) {
-                    result.setStream((InputStream) STREAM_DATA_HANDLER_READ_METHOD_1.invoke(streamDataHandler,
+                if (streamDataHandlerClass1 != null && streamDataHandlerClass1.isInstance(streamDataHandler)) {
+                    result.setStream((InputStream) streamDataHandlerReadMethod1.invoke(streamDataHandler,
                             (Object[]) null));
-                } else if (STREAM_DATA_HANDLER_CLASS_2 != null
-                        && STREAM_DATA_HANDLER_CLASS_2.isInstance(streamDataHandler)) {
-                    result.setStream((InputStream) STREAM_DATA_HANDLER_READ_METHOD_2.invoke(streamDataHandler,
+                } else if (streamDataHandlerClass2 != null
+                        && streamDataHandlerClass2.isInstance(streamDataHandler)) {
+                    result.setStream((InputStream) streamDataHandlerReadMethod2.invoke(streamDataHandler,
                             (Object[]) null));
                 } else {
                     result.setStream(contentStream.getStream().getInputStream());

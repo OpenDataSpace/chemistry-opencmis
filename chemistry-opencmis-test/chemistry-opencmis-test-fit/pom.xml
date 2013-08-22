@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.apache.chemistry.opencmis</groupId>
 		<artifactId>chemistry-opencmis</artifactId>
-		<version>0.10.0-SNAPSHOT</version>
+		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
@@ -84,7 +84,7 @@
 					<encoding>UTF-8</encoding>
 					<reuseForks>true</reuseForks>
 					<forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
-					<argLine>-Xmx512m</argLine>	
+					<argLine>-Xmx512m -ea:org.apache.chemistry</argLine>	
 				</configuration>
 				<executions>
 					<execution>

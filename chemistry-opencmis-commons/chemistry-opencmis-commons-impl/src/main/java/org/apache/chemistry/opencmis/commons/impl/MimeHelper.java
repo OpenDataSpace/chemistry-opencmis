@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
+
 /**
  * MIME helper class.
  */
@@ -274,7 +276,8 @@ public final class MimeHelper {
                     try {
                         return boundaryStr.getBytes("ISO-8859-1");
                     } catch (UnsupportedEncodingException e) {
-                        return boundaryStr.getBytes();
+                        // shouldn't happen...
+                        throw new CmisRuntimeException("Unsupported encoding 'ISO-8859-1'", e);
                     }
                 }
             }
@@ -310,21 +313,21 @@ public final class MimeHelper {
 
         public static final int QUOTEDSTRING = -2;
 
-        private final int _type;
+        private final int type;
 
-        private final String _value;
+        private final String value;
 
         public Token(int type, String value) {
-            _type = type;
-            _value = value;
+            this.type = type;
+            this.value = value;
         }
 
         public int getType() {
-            return _type;
+            return type;
         }
 
         public String getValue() {
-            return _value;
+            return value;
         }
     }
 
@@ -438,11 +441,10 @@ public final class MimeHelper {
                         throw new ParseException("Invalid escape character");
                     }
                     value.append(header.charAt(i));
-                }
-                // line breaks are ignored, except for naked '\n' characters,
-                // which are consider
-                // parts of linear whitespace.
-                else if (ch == '\r') {
+                } else if (ch == '\r') {
+                    // line breaks are ignored, except for naked '\n'
+                    // characters, which are consider parts of linear
+                    // whitespace.
                     // see if this is a CRLF sequence, and skip the second if it
                     // is.
                     if (i < end - 1 && header.charAt(i + 1) == '\n') {
@@ -479,9 +481,8 @@ public final class MimeHelper {
                 } else if (ch == '\\') {
                     pos++;
                     requiresEscaping = true;
-                }
-                // we need to process line breaks also
-                else if (ch == '\r') {
+                } else if (ch == '\r') {
+                    // we need to process line breaks also
                     requiresEscaping = true;
                 }
             }
@@ -521,9 +522,8 @@ public final class MimeHelper {
                 } else if (ch == '\\') {
                     pos++;
                     requiresEscaping = true;
-                }
-                // we need to process line breaks also
-                else if (ch == '\r') {
+                } else if (ch == '\r') {
+                    // we need to process line breaks also
                     requiresEscaping = true;
                 }
             }
@@ -536,6 +536,7 @@ public final class MimeHelper {
         private void eatWhiteSpace() {
             // skip to end of whitespace
             while (++pos < header.length() && WHITE.indexOf(header.charAt(pos)) != -1) {
+                // just read
             }
         }
     }

@@ -1,4 +1,5 @@
 package org.apache.chemistry.opencmis.inmemory.storedobj.impl;
+
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,7 +21,6 @@ package org.apache.chemistry.opencmis.inmemory.storedobj.impl;
  *
  */
 
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,14 +39,13 @@ import org.apache.chemistry.opencmis.commons.spi.BindingsObjectFactory;
 import org.apache.chemistry.opencmis.inmemory.FilterParser;
 import org.apache.chemistry.opencmis.inmemory.NameValidator;
 import org.apache.chemistry.opencmis.inmemory.storedobj.api.Folder;
-import org.apache.chemistry.opencmis.inmemory.storedobj.api.ObjectStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FolderImpl extends StoredObjectImpl implements Folder {
     private static final Logger LOG = LoggerFactory.getLogger(FilingImpl.class.getName());
-    protected String parentId;
-    
+    private String parentId;
+
     public FolderImpl() {
         super();
     }
@@ -55,7 +54,6 @@ public class FolderImpl extends StoredObjectImpl implements Folder {
         super();
         init(name, parentId);
     }
-
 
     @Override
     public void fillProperties(Map<String, PropertyData<?>> properties, BindingsObjectFactory objFactory,
@@ -66,36 +64,32 @@ public class FolderImpl extends StoredObjectImpl implements Folder {
         // add folder specific properties
 
         if (FilterParser.isContainedInFilter(PropertyIds.PARENT_ID, requestedIds)) {
-            properties.put(PropertyIds.PARENT_ID, objFactory.createPropertyIdData(PropertyIds.PARENT_ID,
-                    parentId));
+            properties.put(PropertyIds.PARENT_ID, objFactory.createPropertyIdData(PropertyIds.PARENT_ID, parentId));
         }
 
         if (FilterParser.isContainedInFilter(PropertyIds.ALLOWED_CHILD_OBJECT_TYPE_IDS, requestedIds)) {
             String allowedChildObjects = null; // TODO: not yet supported
-            properties.put(PropertyIds.ALLOWED_CHILD_OBJECT_TYPE_IDS, objFactory.createPropertyIdData(
-                    PropertyIds.ALLOWED_CHILD_OBJECT_TYPE_IDS, allowedChildObjects));
+            properties.put(PropertyIds.ALLOWED_CHILD_OBJECT_TYPE_IDS,
+                    objFactory.createPropertyIdData(PropertyIds.ALLOWED_CHILD_OBJECT_TYPE_IDS, allowedChildObjects));
         }
 
-//        if (FilterParser.isContainedInFilter(PropertyIds.PATH, requestedIds)) {
-//            String path = getPath();
-//            properties.put(PropertyIds.PATH, objFactory.createPropertyStringData(PropertyIds.PATH, path));
-//        }
     }
 
     @Override
-	public List<String> getAllowedChildObjectTypeIds() {
+    public List<String> getAllowedChildObjectTypeIds() {
         // TODO implement this.
         return null;
     }
 
     @Override
-	public List<RenditionData> getRenditions(String renditionFilter, long maxItems, long skipCount) {
-        if (null==renditionFilter)
+    public List<RenditionData> getRenditions(String renditionFilter, long maxItems, long skipCount) {
+        if (null == renditionFilter) {
             return null;
+        }
         String tokenizer = "[\\s;]";
         String[] formats = renditionFilter.split(tokenizer);
         boolean isImageRendition = testRenditionFilterForImage(formats);
- 
+
         if (isImageRendition) {
             List<RenditionData> renditions = new ArrayList<RenditionData>(1);
             RenditionDataImpl rendition = new RenditionDataImpl();
@@ -116,7 +110,7 @@ public class FolderImpl extends StoredObjectImpl implements Folder {
     }
 
     @Override
-	public ContentStream getRenditionContent(String streamId, long offset, long length) {
+    public ContentStream getRenditionContent(String streamId, long offset, long length) {
         try {
             return getIconFromResourceDir("/folder.png");
         } catch (IOException e) {
@@ -126,16 +120,17 @@ public class FolderImpl extends StoredObjectImpl implements Folder {
     }
 
     @Override
-	public boolean hasRendition(String user) {
+    public boolean hasRendition(String user) {
         return true;
     }
 
     @Override
     public List<String> getParentIds() {
-        if (parentId == null)
+        if (parentId == null) {
             return Collections.emptyList();
-        else
+        } else {
             return Collections.singletonList(parentId);
+        }
     }
 
     @Override
@@ -154,17 +149,17 @@ public class FolderImpl extends StoredObjectImpl implements Folder {
     }
 
     @Override
-    public void setParentId (String parentId) {
+    public void setParentId(String parentId) {
         this.parentId = parentId;
     }
-    
+
     // Helper functions
     private void init(String name, String parentId) {
         if (!NameValidator.isValidName(name)) {
             throw new CmisInvalidArgumentException(NameValidator.ERROR_ILLEGAL_NAME);
         }
         setName(name);
-        this.parentId = parentId;;
+        this.parentId = parentId;
     }
 
 }

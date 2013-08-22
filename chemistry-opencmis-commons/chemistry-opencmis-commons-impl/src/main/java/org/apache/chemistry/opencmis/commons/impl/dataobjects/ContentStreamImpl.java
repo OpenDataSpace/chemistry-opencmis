@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
+import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
 
 /**
  * Content stream data implementation.
@@ -34,7 +35,7 @@ public class ContentStreamImpl extends AbstractExtensionData implements ContentS
 
     private String filename;
     private BigInteger length;
-    private String mimeType;
+    private String mimetype;
     private transient InputStream stream;
 
     /**
@@ -47,27 +48,31 @@ public class ContentStreamImpl extends AbstractExtensionData implements ContentS
      * Constructor.
      */
     public ContentStreamImpl(String filename, BigInteger length, String mimetype, InputStream stream) {
-        setLength(length);
-        setMimeType(mimetype);
-        setFileName(filename);
-        setStream(stream);
+        this.filename = filename;
+        this.length = length;
+        this.mimetype = mimetype;
+        this.stream = stream;
     }
 
     /**
      * Convenience constructor for tests.
      */
     public ContentStreamImpl(String filename, String mimetype, String string) {
-        byte[] bytes;
+        if (string == null) {
+            throw new IllegalArgumentException("String must be set!");
+        }
+
+        byte[] bytes = null;
         try {
             bytes = string.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            // cannot happen
-            bytes = string.getBytes();
+            throw new CmisRuntimeException("Unsupported encoding 'UTF-8'!", e);
         }
-        setLength(BigInteger.valueOf(bytes.length));
-        setMimeType(mimetype);
-        setFileName(filename);
-        setStream(new ByteArrayInputStream(bytes));
+
+        this.filename = filename;
+        this.length = BigInteger.valueOf(bytes.length);
+        this.mimetype = mimetype;
+        this.stream = new ByteArrayInputStream(bytes);
     }
 
     public String getFileName() {
@@ -91,11 +96,11 @@ public class ContentStreamImpl extends AbstractExtensionData implements ContentS
     }
 
     public String getMimeType() {
-        return mimeType;
+        return mimetype;
     }
 
     public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
+        this.mimetype = mimeType;
     }
 
     public InputStream getStream() {
@@ -108,7 +113,7 @@ public class ContentStreamImpl extends AbstractExtensionData implements ContentS
 
     @Override
     public String toString() {
-        return "ContentStream [filename=" + filename + ", length=" + length + ", MIME type=" + mimeType
+        return "ContentStream [filename=" + filename + ", length=" + length + ", MIME type=" + mimetype
                 + ", has stream=" + (stream != null) + "]" + super.toString();
     }
 }

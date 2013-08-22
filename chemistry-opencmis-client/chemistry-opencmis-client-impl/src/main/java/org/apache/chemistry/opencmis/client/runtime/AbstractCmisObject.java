@@ -213,7 +213,7 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
      * Returns the session object.
      */
     protected SessionImpl getSession() {
-        return this.session;
+        return session;
     }
 
     /**
@@ -229,7 +229,7 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
     protected ObjectType getObjectType() {
         readLock();
         try {
-            return this.objectType;
+            return objectType;
         } finally {
             readUnlock();
         }
@@ -612,30 +612,7 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
 
     // --- adapters ---
 
-    @SuppressWarnings({ "unchecked", "deprecation" })
     public <T> T getAdapter(Class<T> adapterInterface) {
-        if (adapterInterface == null) {
-            return null;
-        }
-        if (adapterInterface.equals(org.apache.chemistry.opencmis.client.api.TransientCmisObject.class)) {
-            return (T) createTransientCmisObject();
-        }
-        return null;
-    }
-
-    /**
-     * @deprecated Support for transient objects will be removed in the future.
-     */
-    @Deprecated
-    public org.apache.chemistry.opencmis.client.api.TransientCmisObject getTransientObject() {
-        return getAdapter(org.apache.chemistry.opencmis.client.api.TransientCmisObject.class);
-    }
-
-    /**
-     * @deprecated Support for transient objects will be removed in the future.
-     */
-    @Deprecated
-    protected org.apache.chemistry.opencmis.client.api.TransientCmisObject createTransientCmisObject() {
         return null;
     }
 

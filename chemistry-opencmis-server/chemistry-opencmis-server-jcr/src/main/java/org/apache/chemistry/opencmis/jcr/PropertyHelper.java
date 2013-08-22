@@ -19,6 +19,11 @@
 
 package org.apache.chemistry.opencmis.jcr;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.GregorianCalendar;
+import java.util.List;
+
 import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.data.Properties;
 import org.apache.chemistry.opencmis.commons.data.PropertyData;
@@ -36,11 +41,6 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyIntegerImp
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyStringImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyUriImpl;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.GregorianCalendar;
-import java.util.List;
-
 /**
  * Helper class with utility functions for handling {@link Properties}.
  */
@@ -50,11 +50,13 @@ public final class PropertyHelper {
 
     /**
      * Retrieve a string value.
-     *
+     * 
      * @param properties
-     * @param name  the name of the value to retrieve
-     * @return  the first value of the given <code>name</code> or <code>null</code> if either
-     *      these are no string properties or no property of <code>name</code> exists. 
+     * @param name
+     *            the name of the value to retrieve
+     * @return the first value of the given <code>name</code> or
+     *         <code>null</code> if either these are no string properties or no
+     *         property of <code>name</code> exists.
      */
     public static String getStringProperty(Properties properties, String name) {
         PropertyData<?> property = properties.getProperties().get(name);
@@ -84,17 +86,21 @@ public final class PropertyHelper {
 
     /**
      * @param prop
-     * @return  <code>true</code> iff <code>prop</code> denotes an empty property data value
+     * @return <code>true</code> iff <code>prop</code> denotes an empty property
+     *         data value
      */
     public static boolean isPropertyEmpty(PropertyData<?> prop) {
         return prop == null || prop.getValues() == null || prop.getValues().isEmpty();
     }
 
     /**
-     * Determine the default property data value for a given property definition.
+     * Determine the default property data value for a given property
+     * definition.
+     * 
      * @param propDef
      * @return
-     * @throws CmisRuntimeException  if <code>propDef</code> is invalid or unknown.
+     * @throws CmisRuntimeException
+     *             if <code>propDef</code> is invalid or unknown.
      */
     @SuppressWarnings("unchecked")
     public static PropertyData<?> getDefaultValue(PropertyDefinition<?> propDef) {
@@ -105,24 +111,24 @@ public final class PropertyHelper {
         List<?> defaultValue = propDef.getDefaultValue();
         if (defaultValue != null && !defaultValue.isEmpty()) {
             switch (propDef.getPropertyType()) {
-                case BOOLEAN:
-                    return new PropertyBooleanImpl(propDef.getId(), (List<Boolean>) defaultValue);
-                case DATETIME:
-                    return new PropertyDateTimeImpl(propDef.getId(), (List<GregorianCalendar>) defaultValue);
-                case DECIMAL:
-                    return new PropertyDecimalImpl(propDef.getId(), (List<BigDecimal>) defaultValue);
-                case HTML:
-                    return new PropertyHtmlImpl(propDef.getId(), (List<String>) defaultValue);
-                case ID:
-                    return new PropertyIdImpl(propDef.getId(), (List<String>) defaultValue);
-                case INTEGER:
-                    return new PropertyIntegerImpl(propDef.getId(), (List<BigInteger>) defaultValue);
-                case STRING:
-                    return new PropertyStringImpl(propDef.getId(), (List<String>) defaultValue);
-                case URI:
-                    return new PropertyUriImpl(propDef.getId(), (List<String>) defaultValue);
-                default:
-                    throw new CmisRuntimeException("Unknown datatype: " + propDef.getPropertyType());
+            case BOOLEAN:
+                return new PropertyBooleanImpl(propDef.getId(), (List<Boolean>) defaultValue);
+            case DATETIME:
+                return new PropertyDateTimeImpl(propDef.getId(), (List<GregorianCalendar>) defaultValue);
+            case DECIMAL:
+                return new PropertyDecimalImpl(propDef.getId(), (List<BigDecimal>) defaultValue);
+            case HTML:
+                return new PropertyHtmlImpl(propDef.getId(), (List<String>) defaultValue);
+            case ID:
+                return new PropertyIdImpl(propDef.getId(), (List<String>) defaultValue);
+            case INTEGER:
+                return new PropertyIntegerImpl(propDef.getId(), (List<BigInteger>) defaultValue);
+            case STRING:
+                return new PropertyStringImpl(propDef.getId(), (List<String>) defaultValue);
+            case URI:
+                return new PropertyUriImpl(propDef.getId(), (List<String>) defaultValue);
+            default:
+                throw new CmisRuntimeException("Unknown datatype: " + propDef.getPropertyType());
             }
         }
         return null;

@@ -18,18 +18,18 @@
  */
 package org.apache.chemistry.opencmis.jcr.type;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.jcr.JcrNode;
 import org.apache.chemistry.opencmis.jcr.JcrTypeManager;
 import org.apache.chemistry.opencmis.jcr.PathManager;
 import org.apache.chemistry.opencmis.jcr.query.IdentifierMap;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-
 /**
  * Provides operations for a specific CMIS object type.
- *
+ * 
  * @see JcrTypeHandlerManager
  */
 public interface JcrTypeHandler {
@@ -49,9 +49,11 @@ public interface JcrTypeHandler {
 
     /**
      * Used by QueryTranslator to translate CMIS queries to JCR queries.
-     *
+     * 
      * @see org.apache.chemistry.opencmis.jcr.query.QueryTranslator
-     * @see org.apache.chemistry.opencmis.jcr.JcrRepository#query(javax.jcr.Session, java.lang.String, java.lang.Boolean, java.lang.Boolean, java.math.BigInteger, java.math.BigInteger)
+     * @see org.apache.chemistry.opencmis.jcr.JcrRepository#query(javax.jcr.Session,
+     *      java.lang.String, java.lang.Boolean, java.lang.Boolean,
+     *      java.math.BigInteger, java.math.BigInteger)
      */
     IdentifierMap getIdentifierMap();
 }

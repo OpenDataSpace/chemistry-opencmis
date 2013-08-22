@@ -18,6 +18,9 @@
  */
 package org.apache.chemistry.opencmis.commons.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * <p>
  * Encodes and decodes to and from Base64 notation.
@@ -31,6 +34,8 @@ package org.apache.chemistry.opencmis.commons.impl;
  * @version 2.3.7
  */
 public final class Base64 {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(Base64.class);
 
     /* ******** P U B L I C F I E L D S ******** */
 
@@ -318,7 +323,7 @@ public final class Base64 {
      * <b>and</b> URLSAFE in which case one of them will be picked, though there
      * is no guarantee as to which one will be picked.
      */
-    private static final byte[] getAlphabet(int options) {
+    private static byte[] getAlphabet(int options) {
         if ((options & URL_SAFE) == URL_SAFE) {
             return _URL_SAFE_ALPHABET;
         } else if ((options & ORDERED) == ORDERED) {
@@ -334,7 +339,7 @@ public final class Base64 {
      * URL_SAFE in which case one of them will be picked, though there is no
      * guarantee as to which one will be picked.
      */
-    private static final byte[] getDecodabet(int options) {
+    private static byte[] getDecodabet(int options) {
         if ((options & URL_SAFE) == URL_SAFE) {
             return _URL_SAFE_DECODABET;
         } else if ((options & ORDERED) == ORDERED) {
@@ -1221,7 +1226,7 @@ public final class Base64 {
 
                 } // end try
                 catch (java.io.IOException e) {
-                    e.printStackTrace();
+                    LOG.error(e.getMessage(), e);
                     // Just return originally-decoded bytes
                 } // end catch
                 finally {

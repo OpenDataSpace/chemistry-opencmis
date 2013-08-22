@@ -41,6 +41,10 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.StoredObject;
 
 public class BaseServiceValidatorImpl implements CmisServiceValidator {
 
+    protected static final String UNKNOWN_OBJECT_ID = "Unknown object id: ";
+    protected static final String UNKNOWN_REPOSITORY_ID = "Unknown repository id: ";
+    protected static final String OBJECT_ID_CANNOT_BE_NULL = "Object Id cannot be null.";
+    protected static final String REPOSITORY_ID_CANNOT_BE_NULL = "Repository Id cannot be null.";
     protected final StoreManager fStoreManager;
 
     public BaseServiceValidatorImpl(StoreManager sm) {
@@ -60,23 +64,23 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
      */
     protected StoredObject checkStandardParameters(String repositoryId, String objectId) {
         if (null == repositoryId) {
-            throw new CmisInvalidArgumentException("Repository Id cannot be null.");
+            throw new CmisInvalidArgumentException(REPOSITORY_ID_CANNOT_BE_NULL);
         }
 
         if (null == objectId) {
-            throw new CmisInvalidArgumentException("Object Id cannot be null.");
+            throw new CmisInvalidArgumentException(OBJECT_ID_CANNOT_BE_NULL);
         }
 
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
 
         if (objStore == null) {
-            throw new CmisObjectNotFoundException("Unknown repository id: " + repositoryId);
+            throw new CmisObjectNotFoundException(UNKNOWN_REPOSITORY_ID + repositoryId);
         }
 
         StoredObject so = objStore.getObjectById(objectId);
 
         if (so == null) {
-            throw new CmisObjectNotFoundException("Unknown object id: " + objectId);
+            throw new CmisObjectNotFoundException(UNKNOWN_OBJECT_ID + objectId);
         }
 
         return so;
@@ -84,7 +88,7 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
 
     protected StoredObject checkStandardParametersByPath(String repositoryId, String path, String user) {
         if (null == repositoryId) {
-            throw new CmisInvalidArgumentException("Repository Id cannot be null.");
+            throw new CmisInvalidArgumentException(REPOSITORY_ID_CANNOT_BE_NULL);
         }
 
         if (null == path) {
@@ -94,7 +98,7 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
 
         if (objStore == null) {
-            throw new CmisObjectNotFoundException("Unknown repository id: " + repositoryId);
+            throw new CmisObjectNotFoundException(UNKNOWN_REPOSITORY_ID + repositoryId);
         }
 
         StoredObject so = objStore.getObjectByPath(path, user);
@@ -111,7 +115,7 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
         StoredObject so = null;
 
         if (null == repositoryId) {
-            throw new CmisInvalidArgumentException("Repository Id cannot be null.");
+            throw new CmisInvalidArgumentException(REPOSITORY_ID_CANNOT_BE_NULL);
         }
 
         if (null != objectId) {
@@ -119,13 +123,13 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
             ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
 
             if (objStore == null) {
-                throw new CmisObjectNotFoundException("Unknown repository id: " + repositoryId);
+                throw new CmisObjectNotFoundException(UNKNOWN_REPOSITORY_ID + repositoryId);
             }
 
             so = objStore.getObjectById(objectId);
 
             if (so == null) {
-                throw new CmisObjectNotFoundException("Unknown object id: " + objectId);
+                throw new CmisObjectNotFoundException(UNKNOWN_OBJECT_ID + objectId);
             }
         }
 
@@ -135,13 +139,13 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     protected StoredObject checkExistingObjectId(ObjectStore objStore, String objectId) {
 
         if (null == objectId) {
-            throw new CmisInvalidArgumentException("Object Id cannot be null.");
+            throw new CmisInvalidArgumentException(OBJECT_ID_CANNOT_BE_NULL);
         }
 
         StoredObject so = objStore.getObjectById(objectId);
 
         if (so == null) {
-            throw new CmisObjectNotFoundException("Unknown object id: " + objectId);
+            throw new CmisObjectNotFoundException(UNKNOWN_OBJECT_ID + objectId);
         }
 
         return so;
@@ -149,13 +153,13 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
 
     protected void checkRepositoryId(String repositoryId) {
         if (null == repositoryId) {
-            throw new CmisInvalidArgumentException("Repository Id cannot be null.");
+            throw new CmisInvalidArgumentException(REPOSITORY_ID_CANNOT_BE_NULL);
         }
 
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
 
         if (objStore == null) {
-            throw new CmisInvalidArgumentException("Unknown repository id: " + repositoryId);
+            throw new CmisInvalidArgumentException(UNKNOWN_REPOSITORY_ID + repositoryId);
         }
     }
 
@@ -167,83 +171,85 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
         so[1] = checkExistingObjectId(objectStore, objectId2);
         return so;
     }
-    
+
     protected void checkPolicies(String repositoryId, List<String> policyIds) {
         if (policyIds != null && policyIds.size() > 0) {
             for (String policyId : policyIds) {
                 TypeDefinitionContainer tdc = fStoreManager.getTypeById(repositoryId, policyId);
-                if (tdc == null)
+                if (tdc == null) {
                     throw new CmisInvalidArgumentException("Unknown policy type: " + policyId);
-                if (tdc.getTypeDefinition().getBaseTypeId() != BaseTypeId.CMIS_POLICY)
-                    throw new CmisInvalidArgumentException( policyId + " is not a policy type");
+                }
+                if (tdc.getTypeDefinition().getBaseTypeId() != BaseTypeId.CMIS_POLICY) {
+                    throw new CmisInvalidArgumentException(policyId + " is not a policy type");
+                }
             }
         }
     }
 
     @Override
-	public void getRepositoryInfos(CallContext context, ExtensionsData extension) {
+    public void getRepositoryInfos(CallContext context, ExtensionsData extension) {
     }
 
     @Override
-	public void getRepositoryInfo(CallContext context, String repositoryId, ExtensionsData extension) {
+    public void getRepositoryInfo(CallContext context, String repositoryId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public void getTypeChildren(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
+    public void getTypeChildren(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public void getTypeDescendants(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
+    public void getTypeDescendants(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public void getTypeDefinition(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
+    public void getTypeDefinition(CallContext context, String repositoryId, String typeId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public StoredObject getChildren(CallContext context, String repositoryId, String folderId, ExtensionsData extension) {
+    public StoredObject getChildren(CallContext context, String repositoryId, String folderId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject getDescendants(CallContext context, String repositoryId, String folderId,
+    public StoredObject getDescendants(CallContext context, String repositoryId, String folderId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject getFolderTree(CallContext context, String repositoryId, String folderId,
+    public StoredObject getFolderTree(CallContext context, String repositoryId, String folderId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject getObjectParents(CallContext context, String repositoryId, String objectId,
+    public StoredObject getObjectParents(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject getFolderParent(CallContext context, String repositoryId, String folderId,
+    public StoredObject getFolderParent(CallContext context, String repositoryId, String folderId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject getCheckedOutDocs(CallContext context, String repositoryId, String folderId,
+    public StoredObject getCheckedOutDocs(CallContext context, String repositoryId, String folderId,
             ExtensionsData extension) {
 
         if (null != folderId) {
@@ -256,26 +262,26 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     }
 
     @Override
-	public StoredObject createDocument(CallContext context, String repositoryId, String folderId,
+    public StoredObject createDocument(CallContext context, String repositoryId, String folderId,
             List<String> policyIds, ExtensionsData extension) {
         return checkStandardParametersAllowNull(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject createDocumentFromSource(CallContext context, String repositoryId, String sourceId,
+    public StoredObject createDocumentFromSource(CallContext context, String repositoryId, String sourceId,
             String folderId, List<String> policyIds, ExtensionsData extension) {
 
         return checkStandardParametersAllowNull(repositoryId, sourceId);
     }
 
     @Override
-	public StoredObject createFolder(CallContext context, String repositoryId, String folderId, List<String> policyIds,
+    public StoredObject createFolder(CallContext context, String repositoryId, String folderId, List<String> policyIds,
             ExtensionsData extension) {
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject[] createRelationship(CallContext context, String repositoryId, String sourceId,
+    public StoredObject[] createRelationship(CallContext context, String repositoryId, String sourceId,
             String targetId, List<String> policyIds, ExtensionsData extension) {
         checkRepositoryId(repositoryId);
         checkStandardParametersAllowNull(repositoryId, null);
@@ -283,69 +289,69 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     }
 
     @Override
-	public StoredObject createPolicy(CallContext context, String repositoryId, String folderId, Acl addAces,
+    public StoredObject createPolicy(CallContext context, String repositoryId, String folderId, Acl addAces,
             Acl removeAces, List<String> policyIds, ExtensionsData extension) {
 
-        return checkStandardParametersAllowNull(repositoryId, null);
+        return checkStandardParametersAllowNull(repositoryId, folderId);
     }
 
     // CMIS 1.1
     @Override
-	public StoredObject createItem(CallContext context, String repositoryId, Properties properties, String folderId,
+    public StoredObject createItem(CallContext context, String repositoryId, Properties properties, String folderId,
             List<String> policies, Acl addAces, Acl removeAces, ExtensionsData extension) {
         return checkStandardParametersAllowNull(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject getAllowableActions(CallContext context, String repositoryId, String objectId,
+    public StoredObject getAllowableActions(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
         //
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject getObject(CallContext context, String repositoryId, String objectId, ExtensionsData extension) {
+    public StoredObject getObject(CallContext context, String repositoryId, String objectId, ExtensionsData extension) {
 
         StoredObject so = checkStandardParameters(repositoryId, objectId);
         return so;
     }
 
     @Override
-	public StoredObject getProperties(CallContext context, String repositoryId, String objectId,
+    public StoredObject getProperties(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject getRenditions(CallContext context, String repositoryId, String objectId,
+    public StoredObject getRenditions(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject getObjectByPath(CallContext context, String repositoryId, String path, ExtensionsData extension) {
+    public StoredObject getObjectByPath(CallContext context, String repositoryId, String path, ExtensionsData extension) {
 
         return checkStandardParametersByPath(repositoryId, path, context.getUsername());
     }
 
     @Override
-	public StoredObject getContentStream(CallContext context, String repositoryId, String objectId, String streamId,
+    public StoredObject getContentStream(CallContext context, String repositoryId, String objectId, String streamId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject updateProperties(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject updateProperties(CallContext context, String repositoryId, Holder<String> objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject[] moveObject(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject[] moveObject(CallContext context, String repositoryId, Holder<String> objectId,
             String targetFolderId, String sourceFolderId, ExtensionsData extension) {
 
         StoredObject[] res = new StoredObject[3];
@@ -356,117 +362,114 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     }
 
     @Override
-	public StoredObject deleteObject(CallContext context, String repositoryId, String objectId, Boolean allVersions,
+    public StoredObject deleteObject(CallContext context, String repositoryId, String objectId, Boolean allVersions,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject deleteTree(CallContext context, String repositoryId, String folderId, Boolean allVersions,
+    public StoredObject deleteTree(CallContext context, String repositoryId, String folderId, Boolean allVersions,
             UnfileObject unfileObjects, ExtensionsData extension) {
         return checkStandardParameters(repositoryId, folderId);
     }
 
     @Override
-	public StoredObject setContentStream(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject setContentStream(CallContext context, String repositoryId, Holder<String> objectId,
             Boolean overwriteFlag, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject appendContentStream(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject appendContentStream(CallContext context, String repositoryId, Holder<String> objectId,
             ExtensionsData extension) {
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject deleteContentStream(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject deleteContentStream(CallContext context, String repositoryId, Holder<String> objectId,
             ExtensionsData extension) {
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject checkOut(CallContext context, String repositoryId, Holder<String> objectId,
+    public StoredObject checkOut(CallContext context, String repositoryId, Holder<String> objectId,
             ExtensionsData extension, Holder<Boolean> contentCopied) {
 
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject cancelCheckOut(CallContext context, String repositoryId, String objectId,
+    public StoredObject cancelCheckOut(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject checkIn(CallContext context, String repositoryId, Holder<String> objectId, Acl addAces,
+    public StoredObject checkIn(CallContext context, String repositoryId, Holder<String> objectId, Acl addAces,
             Acl removeAces, List<String> policyIds, ExtensionsData extension) {
         return checkStandardParameters(repositoryId, objectId.getValue());
     }
 
     @Override
-	public StoredObject getObjectOfLatestVersion(CallContext context, String repositoryId, String objectId,
+    public StoredObject getObjectOfLatestVersion(CallContext context, String repositoryId, String objectId,
             String versionSeriesId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, versionSeriesId == null ? objectId : versionSeriesId);
     }
 
     @Override
-	public StoredObject getPropertiesOfLatestVersion(CallContext context, String repositoryId, String objectId,
+    public StoredObject getPropertiesOfLatestVersion(CallContext context, String repositoryId, String objectId,
             String versionSeriesId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, versionSeriesId == null ? objectId : versionSeriesId);
     }
 
     @Override
-	public StoredObject getAllVersions(CallContext context, String repositoryId, String objectId,
+    public StoredObject getAllVersions(CallContext context, String repositoryId, String objectId,
             String versionSeriesId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, versionSeriesId == null ? objectId : versionSeriesId);
     }
 
     @Override
-	public void query(CallContext context, String repositoryId, ExtensionsData extension) {
+    public void query(CallContext context, String repositoryId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public void getContentChanges(CallContext context, String repositoryId, ExtensionsData extension) {
+    public void getContentChanges(CallContext context, String repositoryId, ExtensionsData extension) {
 
         checkRepositoryId(repositoryId);
     }
 
     @Override
-	public StoredObject[] addObjectToFolder(CallContext context, String repositoryId, String objectId, String folderId,
+    public StoredObject[] addObjectToFolder(CallContext context, String repositoryId, String objectId, String folderId,
             Boolean allVersions, ExtensionsData extension) {
 
         return checkParams(repositoryId, objectId, folderId);
     }
 
     @Override
-	public StoredObject[] removeObjectFromFolder(CallContext context, String repositoryId, String objectId,
+    public StoredObject[] removeObjectFromFolder(CallContext context, String repositoryId, String objectId,
             String folderId, ExtensionsData extension) {
 
-        if (folderId != null)
-        {
+        if (folderId != null) {
             return checkParams(repositoryId, objectId, folderId);
-        }
-        else
-        {
+        } else {
             StoredObject[] so = new StoredObject[1];
             checkRepositoryId(repositoryId);
             ObjectStore objectStore = fStoreManager.getObjectStore(repositoryId);
             so[0] = checkExistingObjectId(objectStore, objectId);
             return so;
-        }        
+        }
     }
 
     @Override
-	public StoredObject getObjectRelationships(CallContext context, String repositoryId, String objectId,
+    public StoredObject getObjectRelationships(CallContext context, String repositoryId, String objectId,
             RelationshipDirection relationshipDirection, String typeId, ExtensionsData extension) {
 
         StoredObject so = checkStandardParameters(repositoryId, objectId);
@@ -490,45 +493,46 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     }
 
     @Override
-	public StoredObject getAcl(CallContext context, String repositoryId, String objectId, ExtensionsData extension) {
+    public StoredObject getAcl(CallContext context, String repositoryId, String objectId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject applyAcl(CallContext context, String repositoryId, String objectId,
+    public StoredObject applyAcl(CallContext context, String repositoryId, String objectId,
             AclPropagation aclPropagation, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject[] applyPolicy(CallContext context, String repositoryId, String policyId, String objectId,
+    public StoredObject[] applyPolicy(CallContext context, String repositoryId, String policyId, String objectId,
             ExtensionsData extension) {
 
         return checkParams(repositoryId, policyId, objectId);
     }
 
     @Override
-	public StoredObject[] removePolicy(CallContext context, String repositoryId, String policyId, String objectId,
+    public StoredObject[] removePolicy(CallContext context, String repositoryId, String policyId, String objectId,
             ExtensionsData extension) {
 
         StoredObject[] sos = checkParams(repositoryId, policyId, objectId);
         StoredObject pol = sos[0];
-        if (!(pol instanceof Policy))
+        if (!(pol instanceof Policy)) {
             throw new CmisInvalidArgumentException("Id " + policyId + " is not a policy object.");
+        }
         return sos;
     }
 
     @Override
-	public StoredObject getAppliedPolicies(CallContext context, String repositoryId, String objectId,
+    public StoredObject getAppliedPolicies(CallContext context, String repositoryId, String objectId,
             ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
 
     @Override
-	public StoredObject create(CallContext context, String repositoryId, String folderId, ExtensionsData extension) {
+    public StoredObject create(CallContext context, String repositoryId, String folderId, ExtensionsData extension) {
 
         return checkStandardParameters(repositoryId, folderId);
     }
@@ -540,7 +544,7 @@ public class BaseServiceValidatorImpl implements CmisServiceValidator {
     }
 
     @Override
-	public StoredObject applyAcl(CallContext context, String repositoryId, String objectId) {
+    public StoredObject applyAcl(CallContext context, String repositoryId, String objectId) {
 
         return checkStandardParameters(repositoryId, objectId);
     }
