@@ -45,9 +45,8 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.StoredObject;
 
 /**
  * StoredObject is the common superclass of all objects hold in the repository
- * Documents, Folders, Relationships and Policies
+ * Documents, Folders, Relationships and Policies.
  * 
- * @author Jens
  */
 public class StoredObjectImpl implements StoredObject {
 
@@ -264,7 +263,8 @@ public class StoredObjectImpl implements StoredObject {
             properties.put(PropertyIds.OBJECT_TYPE_ID,
                     objFactory.createPropertyIdData(PropertyIds.OBJECT_TYPE_ID, getTypeId()));
         }
-        // set the base type id PropertyIds.CMIS_BASE_TYPE_ID outside because it requires the type definition
+        // set the base type id PropertyIds.CMIS_BASE_TYPE_ID outside because it
+        // requires the type definition
         if (FilterParser.isContainedInFilter(PropertyIds.CREATED_BY, requestedIds)) {
             properties.put(PropertyIds.CREATED_BY,
                     objFactory.createPropertyStringData(PropertyIds.CREATED_BY, getCreatedBy()));
@@ -313,7 +313,7 @@ public class StoredObjectImpl implements StoredObject {
 
     @Override
     public void setCustomProperties(Map<String, PropertyData<?>> properties) {
-        Map<String, PropertyData<?>> propertiesNew = new HashMap<String, PropertyData<?>>(properties); 
+        Map<String, PropertyData<?>> propertiesNew = new HashMap<String, PropertyData<?>>(properties);
         // get a writablecollection
         removeAllSystemProperties(propertiesNew);
         setProperties(propertiesNew);
@@ -324,10 +324,10 @@ public class StoredObjectImpl implements StoredObject {
         return now;
     }
 
-    /**
+    /*
      * Add CMIS_CREATED_BY, CMIS_CREATION_DATE, CMIS_LAST_MODIFIED_BY,
      * CMIS_LAST_MODIFICATION_DATE, CMIS_CHANGE_TOKEN system properties to the
-     * list of properties with current values
+     * list of properties with current values.
      */
     @SuppressWarnings("unchecked")
     private void addSystemBaseProperties(Map<String, PropertyData<?>> properties, String user, boolean isCreated) {
@@ -339,17 +339,16 @@ public class StoredObjectImpl implements StoredObject {
         // constructor.
         setModifiedBy(user);
         if (null != properties) {
-           if (null != properties.get(PropertyIds.DESCRIPTION)) {
-            setDescription((String) properties.get(PropertyIds.DESCRIPTION)
-                       .getFirstValue());
-        }
+            if (null != properties.get(PropertyIds.DESCRIPTION)) {
+                setDescription((String) properties.get(PropertyIds.DESCRIPTION).getFirstValue());
+            }
 
-           if (null != properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS)) {
-               secondaryTypeIds.clear();
-               secondaryTypeIds.addAll((List<String>) properties.get(
-                       PropertyIds.SECONDARY_OBJECT_TYPE_IDS).getValues());
-           }
-       }
+            if (null != properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS)) {
+                secondaryTypeIds.clear();
+                secondaryTypeIds.addAll((List<String>) properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS)
+                        .getValues());
+            }
+        }
         if (isCreated) {
             setCreatedBy(user);
             setName((String) properties.get(PropertyIds.NAME).getFirstValue());
@@ -359,7 +358,7 @@ public class StoredObjectImpl implements StoredObject {
         }
     }
 
-    /**
+    /*
      * Add CMIS_CREATED_BY, CMIS_CREATION_DATE, CMIS_LAST_MODIFIED_BY,
      * CMIS_LAST_MODIFICATION_DATE, CMIS_CHANGE_TOKEN system properties to the
      * list of properties with current values
@@ -533,7 +532,7 @@ public class StoredObjectImpl implements StoredObject {
             IOUtils.closeQuietly(ba);
             IOUtils.closeQuietly(imageStream);
         }
-        
+
         ContentStreamDataImpl content = new ContentStreamDataImpl(0);
         content.setFileName(name);
         content.setMimeType("image/png");

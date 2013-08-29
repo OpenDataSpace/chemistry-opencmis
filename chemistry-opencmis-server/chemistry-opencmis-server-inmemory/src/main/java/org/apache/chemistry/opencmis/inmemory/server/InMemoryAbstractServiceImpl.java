@@ -36,9 +36,7 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.VersionedDocument;
 
 /**
  * Common functionality for all service implementations
- *
- * @author Jens
- *
+ * 
  */
 public class InMemoryAbstractServiceImpl {
 
@@ -62,7 +60,7 @@ public class InMemoryAbstractServiceImpl {
         if (null == properties) {
             return null;
         }
-        
+
         String typeId = (String) properties.getProperties().get(PropertyIds.OBJECT_TYPE_ID).getFirstValue();
         TypeDefinitionContainer typeDefC = fStoreManager.getTypeById(repositoryId, typeId);
         if (typeDefC == null) {
@@ -76,12 +74,13 @@ public class InMemoryAbstractServiceImpl {
         if (null == typeIds || typeIds.isEmpty()) {
             return null;
         }
-        
+
         List<TypeDefinition> result = new ArrayList<TypeDefinition>(typeIds.size());
         for (String typeId : typeIds) {
             TypeDefinitionContainer typeDefC = fStoreManager.getTypeById(repositoryId, typeId);
             if (typeDefC == null) {
-                throw new CmisInvalidArgumentException("Cannot create object, a type with id " + typeId + " is unknown");
+                throw new CmisInvalidArgumentException("Cannot create object, a type with id " + typeId
+                        + " is unknown");
             }
             result.add(typeDefC.getTypeDefinition());
         }
@@ -98,11 +97,11 @@ public class InMemoryAbstractServiceImpl {
     /**
      * We allow checkin, cancel, checkout operations on a single version as well
      * as on a version series This method returns the versioned document
-     * (version series) in each case
-     *
-     * @param value
-     *            version or version series id of a document
-     * @return version series id
+     * (version series) in each case.
+     * 
+     * @param so
+     *            version or versioned document
+     * @return versioned document
      */
     protected VersionedDocument getVersionedDocumentOfObjectId(StoredObject so) {
 
@@ -165,7 +164,7 @@ public class InMemoryAbstractServiceImpl {
             throw new CmisUpdateConflictException("Document " + verDoc.getId() + " is not checked out.");
         }
     }
-    
+
     protected boolean isCheckedOut(StoredObject so, String user) {
         if (so instanceof VersionedDocument || so instanceof DocumentVersion) {
             VersionedDocument verDoc = getVersionedDocumentOfObjectId(so);
@@ -173,7 +172,6 @@ public class InMemoryAbstractServiceImpl {
         } else {
             return false;
         }
-        
 
     }
 

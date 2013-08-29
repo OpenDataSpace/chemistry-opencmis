@@ -33,6 +33,7 @@ import java.util.Set;
 import org.apache.chemistry.opencmis.commons.data.ObjectList;
 import org.apache.chemistry.opencmis.commons.data.PermissionMapping;
 import org.apache.chemistry.opencmis.commons.data.RepositoryInfo;
+import org.apache.chemistry.opencmis.commons.definitions.MutableTypeDefinition;
 import org.apache.chemistry.opencmis.commons.definitions.PermissionDefinition;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinitionContainer;
@@ -71,12 +72,12 @@ import org.apache.chemistry.opencmis.inmemory.storedobj.api.CmisServiceValidator
 import org.apache.chemistry.opencmis.inmemory.storedobj.api.ObjectStore;
 import org.apache.chemistry.opencmis.inmemory.storedobj.api.StoreManager;
 import org.apache.chemistry.opencmis.inmemory.storedobj.api.TypeManagerCreatable;
+import org.apache.chemistry.opencmis.server.support.TypeDefinitionFactory;
 import org.apache.chemistry.opencmis.server.support.TypeManager;
 
 /**
- * factory to create objects that are stored in the InMemory store
+ * Factory to create objects that are stored in the InMemory store.
  * 
- * @author Jens
  */
 public class StoreManagerImpl implements StoreManager {
 
@@ -86,7 +87,7 @@ public class StoreManagerImpl implements StoreManager {
     private static final String CMIS_ALL = "cmis:all";
 
     private final BindingsObjectFactory fObjectFactory;
-
+    private final TypeDefinitionFactory typeFactory = TypeDefinitionFactory.newInstance();
     private static final String OPENCMIS_VERSION;
     private static final String OPENCMIS_SERVER;
 
@@ -103,12 +104,12 @@ public class StoreManagerImpl implements StoreManager {
     }
 
     /**
-     * map from repository id to a type manager
+     * Map from repository id to a type manager.
      */
     private final Map<String, TypeManagerImpl> fMapRepositoryToTypeManager = new HashMap<String, TypeManagerImpl>();
 
     /**
-     * map from repository id to a object store
+     * Map from repository id to a object store.
      */
     private final Map<String, ObjectStore> fMapRepositoryToObjectStore = new HashMap<String, ObjectStore>();
 
@@ -259,10 +260,9 @@ public class StoreManagerImpl implements StoreManager {
             result = new ArrayList<TypeDefinitionContainer>(rootTypes.size());
             // copy list and omit properties
             for (TypeDefinitionContainer c : rootTypes) {
-                AbstractTypeDefinition td = ((AbstractTypeDefinition) c.getTypeDefinition()).clone();
+                MutableTypeDefinition td = typeFactory.copy(c.getTypeDefinition(), includePropertyDefinitions);
                 TypeDefinitionContainerImpl tdc = new TypeDefinitionContainerImpl(td);
                 tdc.setChildren(c.getChildren());
-                td.setPropertyDefinitions(null);
                 result.add(tdc);
             }
         }
@@ -421,7 +421,7 @@ public class StoreManagerImpl implements StoreManager {
         list.add(createMapping(PermissionMapping.CAN_MOVE_TARGET, CMIS_WRITE));
         list.add(createMapping(PermissionMapping.CAN_MOVE_SOURCE, CMIS_WRITE));
         list.add(createMapping(PermissionMapping.CAN_DELETE_OBJECT, CMIS_WRITE));
-        ;
+
         list.add(createMapping(PermissionMapping.CAN_DELETE_TREE_FOLDER, CMIS_WRITE));
         list.add(createMapping(PermissionMapping.CAN_SET_CONTENT_DOCUMENT, CMIS_WRITE));
         list.add(createMapping(PermissionMapping.CAN_DELETE_CONTENT_DOCUMENT, CMIS_WRITE));
@@ -528,10 +528,8 @@ public class StoreManagerImpl implements StoreManager {
     public static TypeDefinitionContainer cloneTypeList(int depth, boolean includePropertyDefinitions,
             TypeDefinitionContainer tdc, TypeDefinitionContainer parent) {
 
-        AbstractTypeDefinition tdClone = ((AbstractTypeDefinition) tdc.getTypeDefinition()).clone();
-        if (!includePropertyDefinitions) {
-            tdClone.setPropertyDefinitions(null);
-        }
+        final TypeDefinitionFactory typeFactory = TypeDefinitionFactory.newInstance();
+        MutableTypeDefinition tdClone = typeFactory.copy(tdc.getTypeDefinition(), includePropertyDefinitions);
 
         TypeDefinitionContainerImpl tdcClone = new TypeDefinitionContainerImpl(tdClone);
         if (null != parent) {

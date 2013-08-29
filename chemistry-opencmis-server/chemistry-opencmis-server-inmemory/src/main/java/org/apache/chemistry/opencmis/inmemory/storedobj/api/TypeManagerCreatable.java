@@ -21,34 +21,37 @@ package org.apache.chemistry.opencmis.inmemory.storedobj.api;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.server.support.TypeManager;
 
+/**
+ * Extension of TypeManager interface to add type mutability.
+ * 
+ */
 public interface TypeManagerCreatable extends TypeManager {
-    
 
     /**
      * Add a type to the type system. Add all properties from inherited types,
      * add type to children of parent types.
      * 
-     * @param cmisType
+     * @param typeDefinition
      *            new type to add
      * @param addInheritedProperties
      *            add properties from supertype to type definition
      */
     void addTypeDefinition(TypeDefinition typeDefinition, boolean addInheritedProperties);
-    
+
     /**
-     * Modify an existing type definition
+     * Modify an existing type definition.
      * 
      * @param typeDefinition
-     *          type to be modified
-     */    
+     *            type to be modified
+     */
     void updateTypeDefinition(TypeDefinition typeDefinition);
 
-   /**
-     * Delete a type from the type system. Delete will succeed only if type is not in use.
-     * Otherwise an exception is thrown
+    /**
+     * Delete a type from the type system. Delete will succeed only if type is
+     * not in use. Otherwise an exception is thrown.
      * 
-     * @param cmisType
-     *            type to delete
+     * @param typeId
+     *            id of type to be deleted
      */
     void deleteTypeDefinition(String typeId);
 }

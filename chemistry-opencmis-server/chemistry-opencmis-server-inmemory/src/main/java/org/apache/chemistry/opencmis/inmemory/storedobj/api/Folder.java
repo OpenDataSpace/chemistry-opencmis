@@ -24,31 +24,30 @@ import java.util.List;
  * A folder is a concrete object (meaning it can be stored) and has Each folder
  * is contained in a parent folder. The parent folder for the special root
  * folder is null.
- * 
- * @author Jens
- * 
  */
 
 public interface Folder extends Fileable {
 
     /**
-     * get parent if of this folder
-     * @return
-     *      parent id of this folder
+     * get parent if of this folder.
+     * 
+     * @return parent id of this folder
      */
     String getParentId();
-      
+
     /**
-     * set the parent id of a folder
+     * set the parent id of a folder.
+     * 
      * @param parentId
-     *      parent id of this folder
+     *            parent id of this folder
      */
     void setParentId(String parentId);
-    
+
     /**
-     * return a list of allowed types of children in this folder
+     * return a list of allowed types of children in this folder.
      * 
      * @return
+     *      list of allowed object child type ids
      */
     List<String> getAllowedChildObjectTypeIds();
 

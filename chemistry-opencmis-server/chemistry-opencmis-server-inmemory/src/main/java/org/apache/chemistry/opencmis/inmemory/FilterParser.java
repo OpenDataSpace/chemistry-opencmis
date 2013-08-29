@@ -18,7 +18,6 @@
  */
 package org.apache.chemistry.opencmis.inmemory;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,9 +25,6 @@ import java.util.List;
 
 import org.apache.chemistry.opencmis.commons.PropertyIds;
 
-/**
- * @author Jens
- */
 public final class FilterParser {
 
     // Utility class
@@ -52,7 +48,9 @@ public final class FilterParser {
 
             // add object id because this is always needed in AtomPub binding:
             if (!(requestedIds.contains(PropertyIds.OBJECT_ID))) {
-                requestedIds = new ArrayList<String>(requestedIds); // copy immutable list
+                requestedIds = new ArrayList<String>(requestedIds); // copy
+                                                                    // immutable
+                                                                    // list
                 requestedIds.add(PropertyIds.OBJECT_ID);
             }
 

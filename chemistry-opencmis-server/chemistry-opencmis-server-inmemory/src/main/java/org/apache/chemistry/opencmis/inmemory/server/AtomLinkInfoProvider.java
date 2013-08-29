@@ -49,9 +49,7 @@ import org.apache.chemistry.opencmis.server.support.TypeManager;
  * For the Atom binding more information might be required than the result of a
  * service call provides (mainly to fill all the links). This class fills the
  * objectInfoHolder that was introduced for this purpose
- *
- * @author Jens
- *
+ * 
  */
 public class AtomLinkInfoProvider {
 
@@ -63,16 +61,19 @@ public class AtomLinkInfoProvider {
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for a single object
-     *
+     * binding for a single object.
+     * 
      * @param repositoryId
      *            id of repository
-     * @param objectId
+     * @param so
      *            object to retrieve information for
-     * @param objectInfos
+     * @param od
+     *            object data
+     * @param objInfo
      *            Holder to fill with information
      */
-    public void fillInformationForAtomLinks(String repositoryId, StoredObject so, ObjectData od, ObjectInfoImpl objInfo) {
+    public void fillInformationForAtomLinks(String repositoryId, StoredObject so, ObjectData od, 
+            ObjectInfoImpl objInfo) {
         if (null == objInfo || null == so) {
             return;
         }
@@ -96,8 +97,8 @@ public class AtomLinkInfoProvider {
             objInfo.setIsCurrentVersion(ver == ver.getParentDocument().getLatestVersion(false));
             objInfo.setVersionSeriesId(ver.getParentDocument().getId());
             objInfo.setWorkingCopyId(pwc == null ? null : pwc.getId());
-            objInfo.setWorkingCopyOriginalId(pwc == ver && ver.getParentDocument().getLatestVersion(false) != null ?
-                    ver.getParentDocument().getLatestVersion(false).getId()
+            objInfo.setWorkingCopyOriginalId(pwc == ver && ver.getParentDocument().getLatestVersion(false) != null ? ver
+                    .getParentDocument().getLatestVersion(false).getId()
                     : null);
         } else if (so instanceof VersionedDocument) {
             VersionedDocument doc = (VersionedDocument) so;
@@ -156,7 +157,7 @@ public class AtomLinkInfoProvider {
         for (StoredObject rel : rels) {
             srcIds.add(rel.getId());
         }
-        
+
         rels = objStore.getRelationships(so.getId(), null, RelationshipDirection.TARGET);
         List<String> targetIds = new ArrayList<String>(rels.size());
         for (StoredObject rel : rels) {
@@ -174,6 +175,17 @@ public class AtomLinkInfoProvider {
 
     }
 
+    /**
+     * FillObjectInfoHolder object with required information needed for Atom
+     * binding for a single object.
+     * 
+     * @param repositoryId
+     *            id of repository
+     * @param so
+     *            object to retrieve information for
+     * @param objectInfo
+     *            Holder to fill with information
+     */
     public void fillInformationForAtomLinks(String repositoryId, StoredObject so, ObjectInfoImpl objectInfo) {
         TypeManager tm = fStoreManager.getTypeManager(repositoryId);
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
@@ -184,16 +196,16 @@ public class AtomLinkInfoProvider {
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for a single object
-     *
+     * binding for a single object.
+     * 
      * @param repositoryId
      *            id of repository
      * @param objectId
      *            object to retrieve information for
-     * @param objectInfos
+     * @param objectInfo
      *            Holder to fill with information
      */
-   public void fillInformationForAtomLinks(String repositoryId, String objectId, ObjectInfoImpl objectInfo) {
+    public void fillInformationForAtomLinks(String repositoryId, String objectId, ObjectInfoImpl objectInfo) {
         if (null == objectInfo || null == objectId) {
             return;
         }
@@ -203,11 +215,10 @@ public class AtomLinkInfoProvider {
         fillInformationForAtomLinks(repositoryId, so, objectInfo);
     }
 
-
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding after a getChildren() call in navigation service
-     *
+     * binding after a getChildren() call in navigation service.
+     * 
      * @param repositoryId
      *            id of repository
      * @param objectId
@@ -224,7 +235,6 @@ public class AtomLinkInfoProvider {
             return;
         }
 
-
         // Fill object information for requested object
         ObjectInfoImpl objectInfo = new ObjectInfoImpl();
         fillInformationForAtomLinks(repositoryId, objectId, objectInfo);
@@ -240,8 +250,8 @@ public class AtomLinkInfoProvider {
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for an object list
-     *
+     * binding for an object list.
+     * 
      * @param repositoryId
      *            id of repository
      * @param objectId
@@ -276,21 +286,19 @@ public class AtomLinkInfoProvider {
     }
 
     private void fillInformationForAtomLinks(ObjectData od, ObjectInfoImpl objectInfo) {
-            objectInfo.setObject(od); 
+        objectInfo.setObject(od);
     }
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for an ObjectInFolderContainer
-     *
+     * binding for an ObjectInFolderContainer.
+     * 
      * @param repositoryId
      *            id of repository
-     * @param objectId
-     *            object to retrieve information for
      * @param objectInfos
      *            Holder to fill with information
-     * @param objList
-     *            result of getChildren call
+     * @param oifc
+     *            result of previous call
      */
     private void fillInformationForAtomLinks(String repositoryId, ObjectInfoHandler objectInfos,
             ObjectInFolderContainer oifc) {
@@ -314,8 +322,8 @@ public class AtomLinkInfoProvider {
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for a list with ObjectInFolderContainers
-     *
+     * binding for a list with ObjectInFolderContainers.
+     * 
      * @param repositoryId
      *            id of repository
      * @param objectId
@@ -352,8 +360,8 @@ public class AtomLinkInfoProvider {
 
     /**
      * FillObjectInfoHolder object with required information needed for Atom
-     * binding for a list with ObjectParentData objects
-     *
+     * binding for a list with ObjectParentData objects.
+     * 
      * @param repositoryId
      *            id of repository
      * @param objectId

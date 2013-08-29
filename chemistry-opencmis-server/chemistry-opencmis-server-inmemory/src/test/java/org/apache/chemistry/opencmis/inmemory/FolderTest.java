@@ -32,11 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * @author <a href="mailto:fmueller@opentext.com">Florian M&uuml;ller</a>
- * @author Jens
- */
-
-/**
  * Some test directly against the in-memory folder object.
  */
 public class FolderTest extends TestCase {
@@ -52,7 +47,7 @@ public class FolderTest extends TestCase {
     private static final String USER = "user";
 
     @Override
-	@Before
+    @Before
     protected void setUp() throws Exception {
         fStore = new ObjectStoreImpl(TEST_REPOSITORY_ID);
         createFolders();
@@ -167,11 +162,11 @@ public class FolderTest extends TestCase {
 
         f11 = (FolderImpl) createFolder("Folder 1.1", f1);
     }
-    
+
     private Folder createFolder(String name, Folder parent) {
-    	return fStore.createFolder(name, null, "user", parent, null, null, null);    	
+        return fStore.createFolder(name, null, "user", parent, null, null, null);
     }
-    
+
     private String getPath(Folder folder) {
         return fStore.getFolderPath(folder.getId());
     }

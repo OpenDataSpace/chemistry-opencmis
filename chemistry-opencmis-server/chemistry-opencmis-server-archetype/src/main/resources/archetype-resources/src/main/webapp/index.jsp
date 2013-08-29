@@ -51,7 +51,7 @@
 <p>The ${artifactId} server is a CMIS server based on Apache Chemistry OpenCMIS.</p>
 <p>You need a CMIS client to access this server. Download the <a href="http://chemistry.apache.org/java/developing/tools/dev-tools-workbench.html">CMIS Workbench</a>.</p>
 
-<h2>Access Informatio</h2>
+<h2>Access Information</h2>
 
 <h3>CMIS 1.1</h3>
 

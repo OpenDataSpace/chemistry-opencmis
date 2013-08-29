@@ -44,9 +44,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author Jens
- */
+
 public class NavigationServiceTest extends AbstractServiceTest {
     private static final Logger log = LoggerFactory.getLogger(NavigationServiceTest.class);
     private static final int NUM_ROOT_FOLDERS = 10;
@@ -144,8 +142,8 @@ public class NavigationServiceTest extends AbstractServiceTest {
         int objCount = createFolderHierachy(numLevels, childrenPerLevel);
 
         log.info("test getting all objects with getDescendants");
-        List<ObjectInFolderContainer> result = fNavSvc.getDescendants(fRepositoryId, fRootFolderId, BigInteger
-                .valueOf(-1), "*", Boolean.TRUE, IncludeRelationships.NONE, null, Boolean.TRUE, null);
+        List<ObjectInFolderContainer> result = fNavSvc.getDescendants(fRepositoryId, fRootFolderId,
+                BigInteger.valueOf(-1), "*", Boolean.TRUE, IncludeRelationships.NONE, null, Boolean.TRUE, null);
 
         for (ObjectInFolderContainer obj : result) {
             log.info("   found folder id " + obj.getObject().getObject().getId() + " path segment "
@@ -207,9 +205,9 @@ public class NavigationServiceTest extends AbstractServiceTest {
         // create a folder
         String folderId = super.createFolder("PagingFolder", fRootFolderId, DocumentTypeCreationHelper
                 .getCmisFolderType().getId());
-        
+
         // create some documents
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             super.createDocument("File-" + i, folderId, "cmis:document", true);
         }
         log.info("test getting all objects with getChildren");
@@ -230,8 +228,8 @@ public class NavigationServiceTest extends AbstractServiceTest {
         // get second page
         maxItems = BigInteger.valueOf(3);
         skipCount = BigInteger.valueOf(3);
-        result = fNavSvc.getChildren(fRepositoryId, folderId, "*", null, false,
-                IncludeRelationships.NONE, null, true, maxItems, skipCount, null);
+        result = fNavSvc.getChildren(fRepositoryId, folderId, "*", null, false, IncludeRelationships.NONE, null, true,
+                maxItems, skipCount, null);
         files = result.getObjects();
         log.info(" found " + files.size() + " files in getChildren()");
         for (ObjectInFolderData file : files) {
@@ -240,12 +238,12 @@ public class NavigationServiceTest extends AbstractServiceTest {
         assertEquals(3, files.size());
         assertEquals(BigInteger.valueOf(10), result.getNumItems());
         assertTrue(result.hasMoreItems());
-      
+
         // get third page
         maxItems = BigInteger.valueOf(3);
         skipCount = BigInteger.valueOf(9);
-        result = fNavSvc.getChildren(fRepositoryId, folderId, "*", null, false,
-                IncludeRelationships.NONE, null, true, maxItems, skipCount, null);
+        result = fNavSvc.getChildren(fRepositoryId, folderId, "*", null, false, IncludeRelationships.NONE, null, true,
+                maxItems, skipCount, null);
         files = result.getObjects();
         log.info(" found " + files.size() + " files in getChildren()");
         for (ObjectInFolderData file : files) {
@@ -255,9 +253,9 @@ public class NavigationServiceTest extends AbstractServiceTest {
         assertEquals(BigInteger.valueOf(10), result.getNumItems());
         assertFalse(result.hasMoreItems());
         log.info("... testGetPaging() finished.");
-        
+
     }
-    
+
     private int getSizeOfDescendants(List<ObjectInFolderContainer> objs) {
         int sum = 0;
         if (null != objs) {
