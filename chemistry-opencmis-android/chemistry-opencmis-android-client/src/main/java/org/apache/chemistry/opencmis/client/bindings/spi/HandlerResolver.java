@@ -16,24 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.chemistry.opencmis.commons;
+package org.apache.chemistry.opencmis.client.bindings.spi;
 
 /**
- * Secondary type IDs that are defined in the CMIS specification.
- * 
- * @cmis 1.1
+ * Dummy interface, which replaces a JAX-WS interface that doesn't exits on
+ * Android.
  */
-public final class SecondaryTypeIds {
+public interface HandlerResolver {
 
-    private SecondaryTypeIds() {
-    }
-
-    /** Repository managed retention type. */
-    public static final String REPOSITORY_MANAGED_RETENTION = "cmis:rm_repMgtRetention";
-    /** Client managed retention type. */
-    public static final String CLIENT_MANAGED_RETENTION = "cmis:rm_clientMgtRetention";
-    /** Client managed retention type with destruction date. */
-    public static final String DESTRUCTION_CLIENT_MANAGED_RETENTION = "cmis:rm_destructionRetention";
-    /** Legal hold type. */
-    public static final String HOLD = "cmis:rm_hold";
 }
