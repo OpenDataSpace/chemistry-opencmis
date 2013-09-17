@@ -19,11 +19,8 @@
 package org.apache.chemistry.opencmis.tck.tests.crud;
 
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.FAILURE;
-import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.INFO;
 import static org.apache.chemistry.opencmis.tck.CmisTestResultStatus.SKIPPED;
 
-import java.io.ByteArrayInputStream;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,20 +29,9 @@ import org.apache.chemistry.opencmis.client.api.ChangeEvent;
 import org.apache.chemistry.opencmis.client.api.ChangeEvents;
 import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Folder;
-import org.apache.chemistry.opencmis.client.api.ObjectId;
 import org.apache.chemistry.opencmis.client.api.Session;
-import org.apache.chemistry.opencmis.commons.PropertyIds;
-import org.apache.chemistry.opencmis.commons.data.ContentStream;
-import org.apache.chemistry.opencmis.commons.definitions.DocumentTypeDefinition;
-import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
-import org.apache.chemistry.opencmis.commons.enums.Action;
 import org.apache.chemistry.opencmis.commons.enums.CapabilityChanges;
-import org.apache.chemistry.opencmis.commons.enums.CapabilityContentStreamUpdates;
 import org.apache.chemistry.opencmis.commons.enums.ChangeType;
-import org.apache.chemistry.opencmis.commons.enums.Updatability;
-import org.apache.chemistry.opencmis.commons.exceptions.CmisUpdateConflictException;
-import org.apache.chemistry.opencmis.commons.impl.IOUtils;
-import org.apache.chemistry.opencmis.commons.impl.dataobjects.ContentStreamImpl;
 import org.apache.chemistry.opencmis.tck.impl.AbstractSessionTest;
 
 public class GetContentChangesTest extends AbstractSessionTest {
@@ -66,26 +52,20 @@ public class GetContentChangesTest extends AbstractSessionTest {
     	
     	runPlausibilityTest(session);
 
-    	return;
-/*    	// create a test folder
-        Folder testFolder = createTestFolder(session);
-
-        try {
-            // update properties test
-            runUpdateTest(session, testFolder);
-
-            // content update test
-            runContentTest(session, testFolder);
-        } finally {
-            // delete the test folder
-            deleteTestFolder();
-        }*/
+    	// create/update/delete a test folder
+    	runCUDFolderTest(session);
+    	// create/update/delete a test file
+    	runCUDFileTest(session);
+    	// move test file
+    	runMoveFileTest(session);
+    	// move test folder
+    	runMoveFolderTest(session);
     }
     
     private void runPlausibilityTest(Session session) {
     	String changeLogToken = session.getRepositoryInfo().getLatestChangeLogToken();
     	ChangeEvents changes = session.getContentChanges(changeLogToken, true, 1000);
-    	if(changeLogToken.equals(changes.getLatestChangeLogToken()) && changes.getTotalNumItems() > 0){
+    	if(changeLogToken.equals(changes.getLatestChangeLogToken()) && changes.getTotalNumItems() > 0) {
     		addResult(createResult(FAILURE, "ChangeLog Token hasn't changed, but events are returned."));
     		return;
     	}
@@ -96,7 +76,7 @@ public class GetContentChangesTest extends AbstractSessionTest {
     		addResult(createResult(FAILURE, "Latest ChangeLog Token hasn't returned, but it should be."));
     		return;
     	}
-    	if(changes.getChangeEvents().size()< changes.getTotalNumItems() && !changes.getHasMoreItems()) {
+    	if(changes.getChangeEvents().size() < changes.getTotalNumItems() && !changes.getHasMoreItems()) {
     		addResult(createResult(FAILURE, "The Changes Object seems to be inconsistent, there are less events in the result then on the server side, but the Change Object returnes no on HasMoreItems."));
     		return;
     	}
@@ -110,114 +90,183 @@ public class GetContentChangesTest extends AbstractSessionTest {
     			return;
     		}
 		}
+    	addResult(createInfoResult("Succeded simple plausibity check."));
     }
 
-    private void runUpdateTest(Session session, Folder testFolder) {
-        Document doc = createDocument(session, testFolder, "update1.txt", "Hello World!");
-
-        try {
-            if (doc.getChangeToken() == null) {
-                addResult(createResult(SKIPPED, "Repository does not provide change tokens. Test skipped!"));
-                return;
-            }
-
-            DocumentTypeDefinition type = (DocumentTypeDefinition) doc.getType();
-            PropertyDefinition<?> namePropDef = type.getPropertyDefinitions().get(PropertyIds.NAME);
-            if (namePropDef.getUpdatability() == Updatability.WHENCHECKEDOUT
-                    || !doc.getAllowableActions().getAllowableActions().contains(Action.CAN_UPDATE_PROPERTIES)) {
-                addResult(createResult(SKIPPED, "Document name can't be changed. Test skipped!"));
-                return;
-            }
-
-            // the first update should succeed
-            Map<String, Object> properties2 = new HashMap<String, Object>();
-            properties2.put(PropertyIds.NAME, "update2.txt");
-            ObjectId newId = doc.updateProperties(properties2, false);
-
-            if (!doc.getId().equals(newId.getId())) {
-                // the repository created a new version
-                // -> a change token test does not make sense
-                addResult(createResult(INFO,
-                        "The repository created a new version. Change tokens are not relevant here."));
-            } else {
-                try {
-                    Map<String, Object> properties3 = new HashMap<String, Object>();
-                    properties3.put(PropertyIds.NAME, "update3.txt");
-                    doc.updateProperties(properties3, false);
-
-                    addResult(createResult(FAILURE, "Updating properties a second time with the same change token "
-                            + "should result in an UpdateConflict exception!"));
-                } catch (CmisUpdateConflictException e) {
-                    // expected exception
-                }
-            }
-        } finally {
-            deleteObject(doc);
-        }
+    
+    private void runCUDFolderTest(Session session) {
+    	CapabilityChanges capChanges = session.getRepositoryInfo().getCapabilities().getChangesCapability();
+    	boolean isPropertyChangesSupported = false;
+    	if(capChanges == CapabilityChanges.ALL || capChanges == CapabilityChanges.PROPERTIES)
+    		isPropertyChangesSupported = true;
+    	String changetoken = session.getRepositoryInfo().getLatestChangeLogToken();
+    	Folder folder = createTestFolder(session);
+    	try{
+    		ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+    		if(changetoken.equals(changes.getLatestChangeLogToken())) {
+    			addResult(createResult(FAILURE, "There should be a create event for the new folder and a new changelog token."));
+    			return;
+    		}
+    		if(changes.getTotalNumItems() == 0 || changes.getChangeEvents().size() == 0) {
+    			addResult(createResult(FAILURE, "There should be a create event for the new folder, but there isn't."));
+    			return;
+    		}
+    		boolean createEventFound = false;
+    		for(ChangeEvent change : changes.getChangeEvents()) {
+    			if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(folder.getId())){
+    				createEventFound = true;
+    				break;
+    			}
+    		}
+    		if(!createEventFound) {
+    			addResult(createResult(FAILURE, "No event found for the created folder."));
+    			return;
+    		}
+    		changetoken = changes.getLatestChangeLogToken();
+    		String oldfolderid = folder.getId();
+    		String newname = folder.getName() + "_new";
+    		Map<String, Object> properties = new HashMap<String, Object>();
+    		properties.put("cmis:name", newname);
+    		folder.updateProperties(properties);
+    		changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+    		boolean updateEventFound = false;
+    		boolean deleteEventFound = false;
+    		createEventFound = false;
+    		for(ChangeEvent change : changes.getChangeEvents()) {
+    			if(change.getChangeType()== ChangeType.UPDATED && change.getObjectId().equals(folder.getId())){
+    				if(isPropertyChangesSupported) {
+    					if(change.getProperties().containsKey("cmis:name")){
+    						List<?> list = change.getProperties().get("cmis:name");
+    						if(list.contains(newname)) {
+    	    					updateEventFound = true;
+    	    					break;
+    						}
+    					}
+    				}else {
+    					if(change.getProperties() != null && change.getProperties().size()>0)
+    						addResult(createInfoResult("Properties won't requested, but there are some."));
+	    				updateEventFound = true;
+	    				break;
+    				}
+    			}else if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(folder.getId())) {
+    				createEventFound = true;
+    			}else if(change.getChangeType() == ChangeType.DELETED && change.getObjectId().equals(oldfolderid)) {
+    				deleteEventFound = true;
+    			}
+    		}
+    		if(!updateEventFound && !(createEventFound && deleteEventFound)) {
+    			addResult(createResult(FAILURE, "There should be an update event for the folder, but there isn't."));
+    			return;
+    		}
+    		changetoken = changes.getLatestChangeLogToken();
+    	}finally {
+    		deleteTestFolder();
+    	}
+    	String folderId = folder.getId();
+    	ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+    	boolean deleteEventFound = false;
+    	for(ChangeEvent change : changes.getChangeEvents()) {
+    		if(change.getChangeType()==ChangeType.DELETED && change.getObjectId().equals(folderId)) {
+    			deleteEventFound = true;
+    			break;
+    		}
+    	}
+    	if(!deleteEventFound) {
+    		addResult(createResult(FAILURE, "There should be a delete event for the folder, but there isn't."));
+    		return;
+    	}
     }
-
-    private void runContentTest(Session session, Folder testFolder) {
-        if (session.getRepositoryInfo().getCapabilities().getContentStreamUpdatesCapability() != CapabilityContentStreamUpdates.ANYTIME) {
-            addResult(createResult(SKIPPED, "Repository doesn't allow to replace content. Test skipped!"));
-            return;
-        }
-
-        Document doc = createDocument(session, testFolder, "content1.txt", "Hello World!");
-
-        try {
-            if (doc.getChangeToken() == null) {
-                addResult(createResult(SKIPPED, "Repository does not provide change tokens. Test skipped!"));
-                return;
-            }
-
-            if (!doc.getAllowableActions().getAllowableActions().contains(Action.CAN_SET_CONTENT_STREAM)) {
-                addResult(createResult(SKIPPED, "Document content can't be changed. Test skipped!"));
-                return;
-            }
-
-            byte[] contentBytes = IOUtils.getUTF8Bytes("New content");
-            ContentStream contentStream = new ContentStreamImpl("content2.txt",
-                    BigInteger.valueOf(contentBytes.length), "text/plain", new ByteArrayInputStream(contentBytes));
-
-            ObjectId newId = doc.setContentStream(contentStream, true, false);
-
-            if (newId == null) {
-                // the AtomPub binding does not return an id here
-                // -> get the latest id from the version series
-                if (Boolean.TRUE.equals(((DocumentTypeDefinition) doc.getType()).isVersionable())) {
-                    List<Document> versions = doc.getAllVersions();
-                    if (versions == null || versions.size() < 1) {
-                        addResult(createResult(FAILURE, "Repository returned an empty list of document versions!"));
-                    } else {
-                        // the latest document is at the top of the list
-                        newId = versions.get(0);
-                    }
-                } else {
-                    // the document type is not versionable
-                    // -> the repository couldn't create a new version
-                    newId = doc;
-                }
-            }
-
-            if (newId != null) {
-                if (!doc.getId().equals(newId.getId())) {
-                    // the repository created a new version
-                    // -> a change token test does not make sense
-                    addResult(createResult(INFO,
-                            "The repository created a new version. Change tokens are not relevant here."));
-                } else {
-                    try {
-                        doc.setContentStream(contentStream, true, false);
-
-                        addResult(createResult(FAILURE, "Updating content a second time with the same change token "
-                                + "should result in an UpdateConflict exception!"));
-                    } catch (CmisUpdateConflictException uce) {
-                        // expected exception
-                    }
-                }
-            }
-        } finally {
-            deleteObject(doc);
-        }
+    
+    private void runCUDFileTest(Session session) {
+    	Folder testfolder = createTestFolder(session);
+    	CapabilityChanges capChanges = session.getRepositoryInfo().getCapabilities().getChangesCapability();
+    	boolean isPropertyChangesSupported = false;
+    	if(capChanges == CapabilityChanges.ALL || capChanges == CapabilityChanges.PROPERTIES)
+    		isPropertyChangesSupported = true;
+    	String changetoken = session.getRepositoryInfo().getLatestChangeLogToken();
+    	Document doc = createDocument(session, testfolder, "update.txt", "Hello changing World!");
+    	try{
+    		ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+    		if(changetoken.equals(changes.getLatestChangeLogToken())) {
+    			addResult(createResult(FAILURE, "There should be a create event for the new file and a new changelog token."));
+    			return;
+    		}
+    		if(changes.getTotalNumItems() == 0 || changes.getChangeEvents().size() == 0) {
+    			addResult(createResult(FAILURE, "There should be a create event for the new file, but there isn't."));
+    			return;
+    		}
+    		boolean createEventFound = false;
+    		for(ChangeEvent change : changes.getChangeEvents()) {
+    			if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(doc.getId())){
+    				createEventFound = true;
+    				break;
+    			}
+    		}
+    		if(!createEventFound) {
+    			addResult(createResult(FAILURE, "No event found for the created file."));
+    			return;
+    		}
+    		changetoken = changes.getLatestChangeLogToken();
+    		String olddocid = doc.getId();
+    		String newname = doc.getName() + "_new";
+    		Map<String, Object> properties = new HashMap<String, Object>();
+    		properties.put("cmis:name", newname);
+    		doc.updateProperties(properties);
+    		changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+    		boolean updateEventFound = false;
+    		boolean deleteEventFound = false;
+    		createEventFound = false;
+    		for(ChangeEvent change : changes.getChangeEvents()) {
+    			if(change.getChangeType() == ChangeType.UPDATED && change.getObjectId().equals(doc.getId())){
+    				if(isPropertyChangesSupported) {
+    					if(change.getProperties().containsKey("cmis:name")){
+    						List<?> list = change.getProperties().get("cmis:name");
+    						if(list.contains(newname)) {
+    	    					updateEventFound = true;
+    	    					break;
+    						}
+    					}
+    				}else {
+    					if(change.getProperties() != null && change.getProperties().size()>0)
+    						addResult(createInfoResult("Properties won't requested, but there are some."));
+	    				updateEventFound = true;
+	    				break;
+    				}
+    			}else if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(doc.getId())) {
+    				createEventFound = true;
+    			}else if(change.getChangeType() == ChangeType.DELETED && change.getObjectId().equals(olddocid)) {
+    				deleteEventFound = true;
+    			}
+    		}
+    		if(!updateEventFound && !(createEventFound && deleteEventFound)) {
+    			addResult(createResult(FAILURE, "There should be an update event for the file, but there isn't."));
+    			return;
+    		}
+    		changetoken = changes.getLatestChangeLogToken();
+        	String docId = doc.getId();
+        	doc.deleteAllVersions();
+        	changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
+        	deleteEventFound = false;
+        	for(ChangeEvent change : changes.getChangeEvents()) {
+        		if(change.getChangeType()==ChangeType.DELETED && change.getObjectId().equals(docId)) {
+        			deleteEventFound = true;
+        			break;
+        		}
+        	}
+        	if(!deleteEventFound) {
+        		addResult(createResult(FAILURE, "There should be a delete event for the file, but there isn't."));
+        		return;
+        	}
+    	}finally {
+    		deleteTestFolder();
+    	}
+    }
+    
+    private void runMoveFolderTest(Session session) {
+    	
+    }
+    
+    private void runMoveFileTest(Session session) {
+    	
     }
 }
