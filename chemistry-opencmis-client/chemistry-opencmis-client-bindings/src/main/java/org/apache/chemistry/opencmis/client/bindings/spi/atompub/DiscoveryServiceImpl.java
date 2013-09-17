@@ -21,6 +21,8 @@ package org.apache.chemistry.opencmis.client.bindings.spi.atompub;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamWriter;
 
@@ -50,7 +52,8 @@ import org.apache.chemistry.opencmis.commons.spi.Holder;
  * Discovery Service AtomPub client.
  */
 public class DiscoveryServiceImpl extends AbstractAtomPubService implements DiscoveryService {
-
+    // Pattern to find the changeLogToken, if available
+    private static Pattern p = Pattern.compile("changeLogToken=([^&]+)");
     /**
      * Constructor.
      */
@@ -85,6 +88,12 @@ public class DiscoveryServiceImpl extends AbstractAtomPubService implements Disc
         for (AtomElement element : feed.getElements()) {
             if (element.getObject() instanceof AtomLink) {
                 if (isNextLink(element)) {
+                    AtomLink nextLink = (AtomLink) element.getObject();
+                    if(nextLink.getHref()!= null) {
+                        Matcher m = p.matcher(nextLink.getHref());
+                        if(m.find())
+                            changeLogToken.setValue(m.group(1));
+                    }
                     result.setHasMoreItems(Boolean.TRUE);
                 }
             } else if (isInt(NAME_NUM_ITEMS, element)) {
