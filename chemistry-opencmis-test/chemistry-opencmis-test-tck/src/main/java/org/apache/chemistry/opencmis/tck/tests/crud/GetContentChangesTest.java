@@ -36,6 +36,8 @@ import org.apache.chemistry.opencmis.tck.impl.AbstractSessionTest;
 
 public class GetContentChangesTest extends AbstractSessionTest {
 
+	private String latestChangeLogToken = null;
+	private static final long timeout = 10000;
     @Override
     public void init(Map<String, String> parameters) {
         super.init(parameters);
@@ -49,29 +51,33 @@ public class GetContentChangesTest extends AbstractSessionTest {
     		addResult(createResult(SKIPPED, "Repository does not provide getChangeLog support. Test skipped!"));
     		return;
     	}
+    	CapabilityChanges capChanges = session.getRepositoryInfo().getCapabilities().getChangesCapability();
+    	boolean isPropertyChangesSupported = false;
+    	if(capChanges == CapabilityChanges.ALL || capChanges == CapabilityChanges.PROPERTIES)
+    		isPropertyChangesSupported = true;
     	
-    	runPlausibilityTest(session);
+    	runPlausibilityTest(session, isPropertyChangesSupported);
 
     	// create/update/delete a test folder
-    	runCUDFolderTest(session);
+    	runCUDFolderTest(session, isPropertyChangesSupported);
     	// create/update/delete a test file
-    	runCUDFileTest(session);
+    	runCUDFileTest(session, isPropertyChangesSupported);
     	// move test file
     	runMoveFileTest(session);
     	// move test folder
     	runMoveFolderTest(session);
     }
     
-    private void runPlausibilityTest(Session session) {
+    private void runPlausibilityTest(Session session, boolean isPropertyChangesSupported) {
     	String changeLogToken = session.getRepositoryInfo().getLatestChangeLogToken();
-    	ChangeEvents changes = session.getContentChanges(changeLogToken, true, 1000);
+    	ChangeEvents changes = session.getContentChanges(changeLogToken, isPropertyChangesSupported, 1000);
     	if(changeLogToken.equals(changes.getLatestChangeLogToken()) && changes.getTotalNumItems() > 0) {
     		addResult(createResult(FAILURE, "ChangeLog Token hasn't changed, but events are returned."));
     		return;
     	}
     	int maxresults = 10;
     	// Check the whole history
-    	changes = session.getContentChanges(null, true, maxresults);
+    	changes = session.getContentChanges(null, isPropertyChangesSupported, maxresults);
     	if(changes.getLatestChangeLogToken() == null) {
     		addResult(createResult(FAILURE, "Latest ChangeLog Token hasn't returned, but it should be."));
     		return;
@@ -84,176 +90,88 @@ public class GetContentChangesTest extends AbstractSessionTest {
     		addResult(createResult(FAILURE, "The client requested "+maxresults+" events, but only recieves "+changes.getChangeEvents().size()+ " of "+changes.getTotalNumItems()+" possible events."));
     		return;
     	}
-    	for (ChangeEvent event: changes.getChangeEvents()) {
-    		if(event.getChangeType() == ChangeType.UPDATED && event.getProperties().size()==0){
-    			addResult(createResult(FAILURE, "The client requested to get changed properties, but didn't recieved them."));
-    			return;
+    	if(isPropertyChangesSupported) {
+    		for (ChangeEvent event: changes.getChangeEvents()) {
+    			if(event.getChangeType() == ChangeType.UPDATED && event.getProperties().size()==0){
+    				addResult(createResult(FAILURE, "The client requested to get changed properties, but didn't recieved them."));
+    				return;
+    			}
     		}
-		}
-    	addResult(createInfoResult("Succeded simple plausibity check."));
+    	}
+    	latestChangeLogToken = changes.getLatestChangeLogToken();
     }
 
     
-    private void runCUDFolderTest(Session session) {
-    	CapabilityChanges capChanges = session.getRepositoryInfo().getCapabilities().getChangesCapability();
-    	boolean isPropertyChangesSupported = false;
-    	if(capChanges == CapabilityChanges.ALL || capChanges == CapabilityChanges.PROPERTIES)
-    		isPropertyChangesSupported = true;
-    	String changetoken = session.getRepositoryInfo().getLatestChangeLogToken();
+    private void runCUDFolderTest(Session session, boolean isPropertyChangesSupported) {
     	Folder folder = createTestFolder(session);
     	try{
-    		ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-    		if(changetoken.equals(changes.getLatestChangeLogToken())) {
-    			addResult(createResult(FAILURE, "There should be a create event for the new folder and a new changelog token."));
-    			return;
-    		}
-    		if(changes.getTotalNumItems() == 0 || changes.getChangeEvents().size() == 0) {
+    		ChangeEvent change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.CREATED, folder.getId());
+    		if(change == null) {
     			addResult(createResult(FAILURE, "There should be a create event for the new folder, but there isn't."));
     			return;
     		}
-    		boolean createEventFound = false;
-    		for(ChangeEvent change : changes.getChangeEvents()) {
-    			if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(folder.getId())){
-    				createEventFound = true;
-    				break;
-    			}
-    		}
-    		if(!createEventFound) {
-    			addResult(createResult(FAILURE, "No event found for the created folder."));
-    			return;
-    		}
-    		changetoken = changes.getLatestChangeLogToken();
-    		String oldfolderid = folder.getId();
     		String newname = folder.getName() + "_new";
     		Map<String, Object> properties = new HashMap<String, Object>();
     		properties.put("cmis:name", newname);
     		folder.updateProperties(properties);
-    		changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-    		boolean updateEventFound = false;
-    		boolean deleteEventFound = false;
-    		createEventFound = false;
-    		for(ChangeEvent change : changes.getChangeEvents()) {
-    			if(change.getChangeType()== ChangeType.UPDATED && change.getObjectId().equals(folder.getId())){
-    				if(isPropertyChangesSupported) {
-    					if(change.getProperties().containsKey("cmis:name")){
-    						List<?> list = change.getProperties().get("cmis:name");
-    						if(list.contains(newname)) {
-    	    					updateEventFound = true;
-    	    					break;
-    						}
-    					}
-    				}else {
-    					if(change.getProperties() != null && change.getProperties().size()>0)
-    						addResult(createInfoResult("Properties won't requested, but there are some."));
-	    				updateEventFound = true;
-	    				break;
-    				}
-    			}else if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(folder.getId())) {
-    				createEventFound = true;
-    			}else if(change.getChangeType() == ChangeType.DELETED && change.getObjectId().equals(oldfolderid)) {
-    				deleteEventFound = true;
-    			}
-    		}
-    		if(!updateEventFound && !(createEventFound && deleteEventFound)) {
+    		change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.UPDATED, folder.getId());
+    		if(change == null) {
     			addResult(createResult(FAILURE, "There should be an update event for the folder, but there isn't."));
     			return;
-    		}
-    		changetoken = changes.getLatestChangeLogToken();
+    		} else if(isPropertyChangesSupported) {
+				if(change.getProperties().containsKey("cmis:name")){
+					List<?> list = change.getProperties().get("cmis:name");
+					if(!list.contains(newname)) {
+    					addResult(createResult(FAILURE, "The update event should contain the updated property, but doesn't."));
+    					return;
+					}
+				}
+			}else {
+				if(change.getProperties() != null && change.getProperties().size()>0)
+					addResult(createInfoResult("Properties won't requested, but there are some."));
+			}
     	}finally {
     		deleteTestFolder();
     	}
     	String folderId = folder.getId();
-    	ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-    	boolean deleteEventFound = false;
-    	for(ChangeEvent change : changes.getChangeEvents()) {
-    		if(change.getChangeType()==ChangeType.DELETED && change.getObjectId().equals(folderId)) {
-    			deleteEventFound = true;
-    			break;
-    		}
-    	}
-    	if(!deleteEventFound) {
+    	ChangeEvent change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.DELETED, folderId);
+    	if(change == null) {
     		addResult(createResult(FAILURE, "There should be a delete event for the folder, but there isn't."));
     		return;
     	}
     }
     
-    private void runCUDFileTest(Session session) {
+    private void runCUDFileTest(Session session, boolean isPropertyChangesSupported) {
     	Folder testfolder = createTestFolder(session);
-    	CapabilityChanges capChanges = session.getRepositoryInfo().getCapabilities().getChangesCapability();
-    	boolean isPropertyChangesSupported = false;
-    	if(capChanges == CapabilityChanges.ALL || capChanges == CapabilityChanges.PROPERTIES)
-    		isPropertyChangesSupported = true;
-    	String changetoken = session.getRepositoryInfo().getLatestChangeLogToken();
     	Document doc = createDocument(session, testfolder, "update.txt", "Hello changing World!");
     	try{
-    		ChangeEvents changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-    		if(changetoken.equals(changes.getLatestChangeLogToken())) {
-    			addResult(createResult(FAILURE, "There should be a create event for the new file and a new changelog token."));
-    			return;
-    		}
-    		if(changes.getTotalNumItems() == 0 || changes.getChangeEvents().size() == 0) {
+    		ChangeEvent change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.CREATED, doc.getId());
+    		if(change == null) {
     			addResult(createResult(FAILURE, "There should be a create event for the new file, but there isn't."));
     			return;
     		}
-    		boolean createEventFound = false;
-    		for(ChangeEvent change : changes.getChangeEvents()) {
-    			if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(doc.getId())){
-    				createEventFound = true;
-    				break;
-    			}
-    		}
-    		if(!createEventFound) {
-    			addResult(createResult(FAILURE, "No event found for the created file."));
-    			return;
-    		}
-    		changetoken = changes.getLatestChangeLogToken();
-    		String olddocid = doc.getId();
     		String newname = doc.getName() + "_new";
     		Map<String, Object> properties = new HashMap<String, Object>();
     		properties.put("cmis:name", newname);
     		doc.updateProperties(properties);
-    		changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-    		boolean updateEventFound = false;
-    		boolean deleteEventFound = false;
-    		createEventFound = false;
-    		for(ChangeEvent change : changes.getChangeEvents()) {
-    			if(change.getChangeType() == ChangeType.UPDATED && change.getObjectId().equals(doc.getId())){
-    				if(isPropertyChangesSupported) {
-    					if(change.getProperties().containsKey("cmis:name")){
-    						List<?> list = change.getProperties().get("cmis:name");
-    						if(list.contains(newname)) {
-    	    					updateEventFound = true;
-    	    					break;
-    						}
-    					}
-    				}else {
-    					if(change.getProperties() != null && change.getProperties().size()>0)
-    						addResult(createInfoResult("Properties won't requested, but there are some."));
-	    				updateEventFound = true;
-	    				break;
-    				}
-    			}else if(change.getChangeType() == ChangeType.CREATED && change.getObjectId().equals(doc.getId())) {
-    				createEventFound = true;
-    			}else if(change.getChangeType() == ChangeType.DELETED && change.getObjectId().equals(olddocid)) {
-    				deleteEventFound = true;
-    			}
-    		}
-    		if(!updateEventFound && !(createEventFound && deleteEventFound)) {
+    		change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.UPDATED, doc.getId());
+    		if(change == null) {
     			addResult(createResult(FAILURE, "There should be an update event for the file, but there isn't."));
     			return;
+    		} else if(isPropertyChangesSupported) {
+    			if(change.getProperties().containsKey("cmis:name")){
+					List<?> list = change.getProperties().get("cmis:name");
+					if(!list.contains(newname)) {
+						addResult(createInfoResult("Properties are requested, but there isn't the changed one."));
+					}
+				}
+    		} else if(change.getProperties() != null && change.getProperties().size()>0){
+    			addResult(createInfoResult("Properties won't requested, but there are some."));
     		}
-    		changetoken = changes.getLatestChangeLogToken();
         	String docId = doc.getId();
         	doc.deleteAllVersions();
-        	changes = session.getContentChanges(changetoken, isPropertyChangesSupported, 100);
-        	deleteEventFound = false;
-        	for(ChangeEvent change : changes.getChangeEvents()) {
-        		if(change.getChangeType()==ChangeType.DELETED && change.getObjectId().equals(docId)) {
-        			deleteEventFound = true;
-        			break;
-        		}
-        	}
-        	if(!deleteEventFound) {
+        	change = waitForChangeLogEvent(session, isPropertyChangesSupported, ChangeType.DELETED, docId);
+        	if(change == null) {
         		addResult(createResult(FAILURE, "There should be a delete event for the file, but there isn't."));
         		return;
         	}
@@ -268,5 +186,23 @@ public class GetContentChangesTest extends AbstractSessionTest {
     
     private void runMoveFileTest(Session session) {
     	
+    }
+    
+    private ChangeEvent waitForChangeLogEvent(Session session, boolean isPropertyChangesSupported, ChangeType type, String objectId) {
+    	long start = System.currentTimeMillis();
+    	while(System.currentTimeMillis() - timeout < start) {
+    		ChangeEvents changes = session.getContentChanges(latestChangeLogToken, isPropertyChangesSupported, 100);
+    		if(latestChangeLogToken.equals(changes.getLatestChangeLogToken()) && (changes.getTotalNumItems() > 0 || changes.getChangeEvents().size() > 0)) {
+    			addResult(createResult(FAILURE, "There should not be any event, because changelog token hasn't changed."));
+    		}
+    		for (ChangeEvent change : changes.getChangeEvents()) {
+				if(change.getChangeType() == type && change.getObjectId().equals(objectId)) {
+					latestChangeLogToken = changes.getLatestChangeLogToken();
+					return change;
+				}
+			}
+    		latestChangeLogToken = changes.getLatestChangeLogToken();
+    	}
+    	return null;
     }
 }
