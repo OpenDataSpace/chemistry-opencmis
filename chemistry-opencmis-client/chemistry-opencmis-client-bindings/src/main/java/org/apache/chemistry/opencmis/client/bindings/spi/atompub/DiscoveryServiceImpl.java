@@ -46,6 +46,7 @@ import org.apache.chemistry.opencmis.commons.impl.XMLUtils;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.ObjectListImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.QueryTypeImpl;
 import org.apache.chemistry.opencmis.commons.spi.DiscoveryService;
+import org.apache.chemistry.opencmis.commons.spi.ExtendedHolder;
 import org.apache.chemistry.opencmis.commons.spi.Holder;
 
 /**
@@ -66,25 +67,43 @@ public class DiscoveryServiceImpl extends AbstractAtomPubService implements Disc
         ObjectListImpl result = new ObjectListImpl();
 
         // find the link
-        String link = loadRepositoryLink(repositoryId, Constants.REP_REL_CHANGES);
+        String link = null;
+        UrlBuilder url = null;
+
+        // if the application doesn't know the change log token but the link to
+        // the next Atom feed
+        if (changeLogToken instanceof ExtendedHolder && changeLogToken.getValue() == null) {
+            link = (String) ((ExtendedHolder<String>) changeLogToken).getExtraValue(Constants.REP_REL_CHANGES);
+            if (link != null) {
+                url = new UrlBuilder(link);
+            }
+        }
+
+        // if the application didn't provide a link to next Atom feed
+        if (link == null) {
+            link = loadRepositoryLink(repositoryId, Constants.REP_REL_CHANGES);
+            if (link != null) {
+                url = new UrlBuilder(link);
+                url.addParameter(Constants.PARAM_CHANGE_LOG_TOKEN,
+                        (changeLogToken == null ? null : changeLogToken.getValue()));
+                url.addParameter(Constants.PARAM_PROPERTIES, includeProperties);
+                url.addParameter(Constants.PARAM_FILTER, filter);
+                url.addParameter(Constants.PARAM_POLICY_IDS, includePolicyIds);
+                url.addParameter(Constants.PARAM_ACL, includeACL);
+                url.addParameter(Constants.PARAM_MAX_ITEMS, maxItems);
+            }
+        }
 
         if (link == null) {
             throw new CmisObjectNotFoundException("Unknown repository or content changes not supported!");
         }
-
-        UrlBuilder url = new UrlBuilder(link);
-        url.addParameter(Constants.PARAM_CHANGE_LOG_TOKEN, (changeLogToken == null ? null : changeLogToken.getValue()));
-        url.addParameter(Constants.PARAM_PROPERTIES, includeProperties);
-        url.addParameter(Constants.PARAM_FILTER, filter);
-        url.addParameter(Constants.PARAM_POLICY_IDS, includePolicyIds);
-        url.addParameter(Constants.PARAM_ACL, includeACL);
-        url.addParameter(Constants.PARAM_MAX_ITEMS, maxItems);
 
         // read and parse
         Response resp = read(url);
         AtomFeed feed = parse(resp.getStream(), AtomFeed.class);
 
         // handle top level
+        String nextLink = null;
         for (AtomElement element : feed.getElements()) {
             if (element.getObject() instanceof AtomLink) {
                 if (isNextLink(element)) {
@@ -95,6 +114,7 @@ public class DiscoveryServiceImpl extends AbstractAtomPubService implements Disc
                             changeLogToken.setValue(m.group(1));
                     }
                     result.setHasMoreItems(Boolean.TRUE);
+                    nextLink = ((AtomLink) element.getObject()).getHref();
                 }
             } else if (isInt(NAME_NUM_ITEMS, element)) {
                 result.setNumItems((BigInteger) element.getObject());
@@ -118,6 +138,16 @@ public class DiscoveryServiceImpl extends AbstractAtomPubService implements Disc
                 if (hit != null) {
                     result.getObjects().add(hit);
                 }
+            }
+        }
+
+        if (changeLogToken != null) {
+            // the AtomPub binding cannot return a new change log token
+            changeLogToken.setValue(null);
+
+            // but we can provide the link to the next Atom feed
+            if (changeLogToken instanceof ExtendedHolder && nextLink != null) {
+                ((ExtendedHolder<String>) changeLogToken).setExtraValue(Constants.REP_REL_CHANGES, nextLink);
             }
         }
 

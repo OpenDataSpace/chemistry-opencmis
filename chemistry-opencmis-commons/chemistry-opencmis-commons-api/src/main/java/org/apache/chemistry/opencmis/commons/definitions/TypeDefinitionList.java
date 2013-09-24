@@ -36,17 +36,16 @@ public interface TypeDefinitionList extends ExtensionsData {
     /**
      * Returns whether there more type definitions or not.
      * 
-     * @return <code>true</code> if there are more type definitions,
-     *         <code>false</code> if there are no more type definitions,
-     *         <code>null</code> if it's unknown
+     * @return {@code true} if there are more type definitions, {@code false} if
+     *         there are no more type definitions, {@code null} if it's unknown
      */
     Boolean hasMoreItems();
 
     /**
      * Returns the total number of type definitions.
      * 
-     * @return total number of type definitions or <code>null</code> if the
-     *         total number is unknown
+     * @return total number of type definitions or {@code null} if the total
+     *         number is unknown
      */
     BigInteger getNumItems();
 }

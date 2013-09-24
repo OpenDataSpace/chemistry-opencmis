@@ -21,12 +21,12 @@ package org.apache.chemistry.opencmis.commons.impl.dataobjects;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.apache.chemistry.opencmis.commons.data.PropertyInteger;
+import org.apache.chemistry.opencmis.commons.data.MutablePropertyInteger;
 
 /**
  * Integer property data implementation.
  */
-public class PropertyIntegerImpl extends AbstractPropertyData<BigInteger> implements PropertyInteger {
+public class PropertyIntegerImpl extends AbstractPropertyData<BigInteger> implements MutablePropertyInteger {
 
     private static final long serialVersionUID = 1L;
 
