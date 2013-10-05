@@ -151,9 +151,11 @@ public final class TypeUtils {
     }
 
     private static boolean checkQueryName(String queryName) {
-        return queryName != null && queryName.length() > 0 && queryName.indexOf(' ') < 0 && queryName.indexOf(',') < 0
-                && queryName.indexOf('"') < 0 && queryName.indexOf('\'') < 0 && queryName.indexOf('\\') < 0
-                && queryName.indexOf('.') < 0 && queryName.indexOf('(') < 0 && queryName.indexOf(')') < 0;
+        return queryName != null && queryName.length() > 0 && queryName.indexOf(' ') < 0 && queryName.indexOf('\t') < 0
+                && queryName.indexOf('\n') < 0 && queryName.indexOf('\r') < 0 && queryName.indexOf('\f') < 0
+                && queryName.indexOf(',') < 0 && queryName.indexOf('"') < 0 && queryName.indexOf('\'') < 0
+                && queryName.indexOf('\\') < 0 && queryName.indexOf('.') < 0 && queryName.indexOf('(') < 0
+                && queryName.indexOf(')') < 0;
     }
 
     /**
@@ -321,9 +323,9 @@ public final class TypeUtils {
             }
         }
 
-        if (propDef.isQueryable() == null) {
+        if (propDef.isOrderable() == null) {
             errors.add(new ValidationError("orderable", "Orderable flag must be set."));
-        } else if (propDef.isQueryable().booleanValue()) {
+        } else if (propDef.isOrderable().booleanValue()) {
             if (propDef.getCardinality() == Cardinality.MULTI) {
                 errors.add(new ValidationError("orderable", "Orderable flag is set to TRUE for a multi-value property."));
             }
