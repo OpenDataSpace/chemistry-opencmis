@@ -266,7 +266,12 @@ public class DiscoveryService {
             feed.writeSelfLink(selfLink.toString(), null);
 
             if (changeLogTokenHolder.getValue() != null) {
-                if (Boolean.TRUE.equals(changes.hasMoreItems())) {
+                // Hotfix: Adding the next link even if no more tokens are available to
+                // fix a DotCMIS client issue, until it is verified, how the change log
+                // token will be included
+                // Uncomment the if condition, if a next link should only be included if
+                // more changes are available
+                // if (Boolean.TRUE.equals(changes.hasMoreItems())) {
                     UrlBuilder nextLink = compileUrlBuilder(baseUrl, RESOURCE_CHANGES, null);
                     nextLink.addParameter(Constants.PARAM_CHANGE_LOG_TOKEN, changeLogTokenHolder.getValue());
                     nextLink.addParameter(Constants.PARAM_PROPERTIES, includeProperties);
@@ -275,7 +280,7 @@ public class DiscoveryService {
                     nextLink.addParameter(Constants.PARAM_ACL, includeAcl);
                     nextLink.addParameter(Constants.PARAM_MAX_ITEMS, maxItems);
                     feed.writeNextLink(nextLink.toString());
-                }
+                //}
 
                 // The CMIS spec says that the AtomPub binding doesn't provide
                 // the change log token. We are doing it anyway.
