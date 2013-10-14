@@ -255,6 +255,11 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=406507#c3 -->
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3.2</version>
+                </plugin>
                 <plugin>
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr3-maven-plugin</artifactId>
@@ -459,7 +464,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
