@@ -120,7 +120,7 @@
          <dependency>
             <artifactId>chemistry-opencmis-osgi-server</artifactId>
             <groupId>org.apache.chemistry.opencmis</groupId>
-            <version>${project.version}</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         
     </dependencies>
