@@ -43,6 +43,21 @@ import org.apache.chemistry.opencmis.commons.spi.AuthenticationProvider;
 
 /**
  * A map with convenience methods to set session parameters.
+ * <p>
+ * Sample code:
+ * <p>
+ * 
+ * <pre>
+ * SessionFactory factory = ...
+ * 
+ * SessionParameterMap parameter = new SessionParameterMap();
+ * 
+ * parameter.setBasicAuthentication("Otto", "****");
+ * parameter.setAtomPubBindingUrl("http://localhost/cmis/atom");
+ * parameter.setRepositoryId("myRepository");
+ * ...
+ * Session session = factory.createSession(parameter);
+ * </pre>
  * 
  * @see SessionParameter
  * @see SessionFactory
@@ -59,7 +74,17 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
     }
 
     /**
-     * Sets an integer value.
+     * Creates a map with the same mappings as the specified map.
+     * 
+     * @param map
+     *            the map whose mappings are to be placed in this map
+     */
+    public SessionParameterMap(Map<? extends String, ? extends String> map) {
+        super(map);
+    }
+
+    /**
+     * Sets a long value.
      * 
      * @param key
      *            the key
@@ -163,6 +188,7 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
 
     /**
      * Sets whether properties should be sent in the succinct format or not.
+     * Only relevant for the browser binding.
      * 
      * @param succinct
      *            {@code true} if properties should be sent in the succinct
@@ -189,10 +215,10 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
     }
 
     /**
-     * Sets the repository id.
+     * Sets the repository ID.
      * 
      * @param repositoryId
-     *            the repository id
+     *            the repository ID
      */
     public void setRepositoryId(String repositoryId) {
         if (repositoryId == null) {
@@ -492,6 +518,9 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
      * @param file
      *            the file
      * 
+     * @throws IOException
+     *             if the entries cannot be read
+     * 
      * @see #load(InputStream)
      */
     public void load(File file) throws IOException {
@@ -514,6 +543,9 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
      * 
      * @param stream
      *            the stream
+     * 
+     * @throws IOException
+     *             if the entries cannot be read
      */
     public void load(InputStream stream) throws IOException {
         if (stream == null) {
@@ -567,8 +599,11 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
     /**
      * Writes all entries to the given file.
      * 
-     * @param stream
-     *            the stream
+     * @param file
+     *            the file
+     * 
+     * @throws IOException
+     *             if the entries cannot be written
      * 
      * @see #store(OutputStream)
      */
@@ -591,6 +626,9 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
      * 
      * @param stream
      *            the stream
+     * 
+     * @throws IOException
+     *             if the entries cannot be written
      */
     public void store(final OutputStream stream) throws IOException {
         if (stream == null) {

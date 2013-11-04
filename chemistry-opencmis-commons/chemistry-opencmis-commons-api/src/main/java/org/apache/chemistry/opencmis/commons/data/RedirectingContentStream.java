@@ -18,26 +18,27 @@
  */
 package org.apache.chemistry.opencmis.commons.data;
 
-import java.util.GregorianCalendar;
-
-import org.apache.chemistry.opencmis.commons.enums.ChangeType;
-
 /**
- * Basic change event.
+ * Content stream redirecting to another location. (AtomPub binding and Browser
+ * binding server only.)
  */
-public interface ChangeEventInfo extends ExtensionsData {
+public interface RedirectingContentStream {
 
     /**
-     * Returns the change event type.
+     * Returns the HTTP status code, for example 301 (moved permanently) or 307
+     * (temporary redirect).
      * 
-     * @return the change event type, not {@code null}
+     * @return the HTTP status code
      */
-    ChangeType getChangeType();
+    int getStatus();
 
     /**
-     * Returns when the change took place.
+     * Returns the location to redirect to.
      * 
-     * @return the timespamp of the change, not {@code null}
+     * This should be an absolute URL, although many clients can also handle a
+     * relative path.
+     * 
+     * @return the location to redirect to
      */
-    GregorianCalendar getChangeTime();
+    String getLocation();
 }

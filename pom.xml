@@ -246,8 +246,8 @@
         <junit.version>4.11</junit.version>
         <slf4j.version>1.7.5</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <apacheclient.version>4.2.5</apacheclient.version>
-        <cxf.version>2.7.5</cxf.version>
+        <apacheclient.version>4.2.6</apacheclient.version>
+        <cxf.version>2.7.7</cxf.version>
         <axis2.version>1.6.2</axis2.version>
     </properties>
 
@@ -581,7 +581,7 @@
                   <groups>
                       <group>
                           <title>OpenCMIS Client API</title>
-                          <packages>org.apache.chemistry.opencmis.client.api:org.apache.chemistry.opencmis.client.util</packages>
+                          <packages>org.apache.chemistry.opencmis.client:org.apache.chemistry.opencmis.client.api:org.apache.chemistry.opencmis.client.util</packages>
                       </group>
                       <group>
                           <title>OpenCMIS Commons API</title>
