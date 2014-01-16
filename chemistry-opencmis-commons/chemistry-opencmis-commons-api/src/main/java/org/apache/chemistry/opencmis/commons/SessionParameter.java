@@ -552,6 +552,8 @@ public final class SessionParameter {
     /** Factory class name for the local binding. */
     public static final String LOCAL_FACTORY = "org.apache.chemistry.opencmis.binding.local.classname";
 
+    // --- authentication ---
+
     /** Class name of the authentication provider. */
     public static final String AUTHENTICATION_PROVIDER_CLASS = "org.apache.chemistry.opencmis.binding.auth.classname";
 
@@ -562,10 +564,29 @@ public final class SessionParameter {
     public static final String AUTH_HTTP_BASIC = "org.apache.chemistry.opencmis.binding.auth.http.basic";
 
     /**
+     * Toggle for OAuth Bearer token authentication. Evaluated by the standard
+     * authentication provider.
+     */
+    public static final String AUTH_OAUTH_BEARER = "org.apache.chemistry.opencmis.binding.auth.http.oauth.bearer";
+
+    /**
      * Toggle for WS-Security UsernameToken authentication. Evaluated by the
      * standard authentication provider.
      */
     public static final String AUTH_SOAP_USERNAMETOKEN = "org.apache.chemistry.opencmis.binding.auth.soap.usernametoken";
+
+    // --- OAuth ---
+
+    public static final String OAUTH_CLIENT_ID = "org.apache.chemistry.opencmis.oauth.clientId";
+    public static final String OAUTH_CLIENT_SECRET = "org.apache.chemistry.opencmis.oauth.clientSecret";
+    public static final String OAUTH_CODE = "org.apache.chemistry.opencmis.oauth.code";
+    public static final String OAUTH_TOKEN_ENDPOINT = "org.apache.chemistry.opencmis.oauth.tokenEndpoint";
+    public static final String OAUTH_REDIRECT_URI = "org.apache.chemistry.opencmis.oauth.redirectUri";
+
+    public static final String OAUTH_ACCESS_TOKEN = "org.apache.chemistry.opencmis.oauth.accessToken";
+    public static final String OAUTH_REFRESH_TOKEN = "org.apache.chemistry.opencmis.oauth.refreshToken";
+    public static final String OAUTH_EXPIRATION_TIMESTAMP = "org.apache.chemistry.opencmis.oauth.expirationTimestamp";
+    public static final String OAUTH_DEFAULT_TOKEN_LIFETIME = "org.apache.chemistry.opencmis.oauth.defaultTokenLifetime";
 
     // --- connection ---
 

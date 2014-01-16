@@ -247,12 +247,28 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
     }
 
     /**
+     * Sets bearer token.
+     * 
+     * @param token
+     *            the bearer token
+     */
+    public void setBearerToken(String token) {
+        if (token == null) {
+            remove(SessionParameter.OAUTH_ACCESS_TOKEN);
+        } else {
+            put(SessionParameter.OAUTH_ACCESS_TOKEN, token);
+        }
+    }
+
+    /**
      * Turns all authentication off if the standard authentication provider is
      * used.
      */
     public void setNoAuthentication() {
         put(SessionParameter.AUTH_HTTP_BASIC, false);
         put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
+
+        remove(SessionParameter.AUTHENTICATION_PROVIDER_CLASS);
     }
 
     /**
@@ -274,6 +290,8 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
 
         put(SessionParameter.AUTH_HTTP_BASIC, true);
         put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
+
+        remove(SessionParameter.AUTHENTICATION_PROVIDER_CLASS);
     }
 
     /**
@@ -298,6 +316,8 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
 
         put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, true);
         put(SessionParameter.AUTH_HTTP_BASIC, basicAuth);
+
+        remove(SessionParameter.AUTHENTICATION_PROVIDER_CLASS);
     }
 
     /**
@@ -322,6 +342,152 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
         put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
         put(SessionParameter.AUTHENTICATION_PROVIDER_CLASS,
                 "org.apache.chemistry.opencmis.client.bindings.spi.NTLMAuthenticationProvider");
+    }
+
+    /**
+     * Turns simple OAuth 2.0 bearer token authentication on and basic
+     * authentication and UsernameToken authentication off.
+     * <p>
+     * This authentication method does not refresh the token when it expires.
+     * 
+     * @param token
+     *            the bearer token
+     */
+    public void setOAuthBearerTokenAuthentication(String token) {
+        if (token == null) {
+            throw new IllegalArgumentException("Token must be set!");
+        }
+
+        setBearerToken(token);
+
+        put(SessionParameter.AUTH_HTTP_BASIC, false);
+        put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
+        put(SessionParameter.AUTH_OAUTH_BEARER, true);
+        put(SessionParameter.OAUTH_ACCESS_TOKEN, token);
+
+        remove(SessionParameter.AUTHENTICATION_PROVIDER_CLASS);
+    }
+
+    /**
+     * Turns OAuth 2.0 authentication on and basic authentication and
+     * UsernameToken authentication off.
+     * <p>
+     * This authentication method requests a new token and refreshes the token
+     * when it expires.
+     * 
+     * @param tokenEntpoint
+     *            the token endpoint URL
+     * @param clientId
+     *            the client ID
+     * @param clientSecret
+     *            the client secret if required, {@code null} otherwise
+     * @param code
+     *            the authorization code
+     * @param redirectUri
+     *            the redirect URI if required, {@code null} otherwise
+     */
+    public void setOAuthAuthentication(String tokenEntpoint, String clientId, String clientSecret, String code,
+            String redirectUri) {
+        if (tokenEntpoint == null || tokenEntpoint.length() == 0) {
+            throw new IllegalArgumentException("Token endpoint must be set!");
+        }
+
+        if (clientId == null || clientId.length() == 0) {
+            throw new IllegalArgumentException("Client ID must be set!");
+        }
+
+        put(SessionParameter.AUTH_HTTP_BASIC, false);
+        put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
+        put(SessionParameter.AUTH_OAUTH_BEARER, false);
+
+        put(SessionParameter.OAUTH_TOKEN_ENDPOINT, tokenEntpoint);
+        put(SessionParameter.OAUTH_CLIENT_ID, clientId);
+
+        if (clientSecret == null) {
+            remove(SessionParameter.OAUTH_CLIENT_SECRET);
+        } else {
+            put(SessionParameter.OAUTH_CLIENT_SECRET, clientSecret);
+        }
+
+        if (code == null) {
+            remove(SessionParameter.OAUTH_CODE);
+        } else {
+            put(SessionParameter.OAUTH_CODE, code);
+        }
+
+        if (redirectUri == null) {
+            remove(SessionParameter.OAUTH_REDIRECT_URI);
+        } else {
+            put(SessionParameter.OAUTH_REDIRECT_URI, redirectUri);
+        }
+
+        put(SessionParameter.AUTHENTICATION_PROVIDER_CLASS,
+                "org.apache.chemistry.opencmis.client.bindings.spi.OAuthAuthenticationProvider");
+    }
+
+    /**
+     * Turns OAuth 2.0 authentication on and basic authentication and
+     * UsernameToken authentication off.
+     * <p>
+     * This authentication method uses the provided token and refreshes the
+     * token when it expires.
+     * 
+     * @param tokenEntpoint
+     *            the token endpoint URL
+     * @param clientId
+     *            the client ID
+     * @param clientSecret
+     *            the client secret if required, {@code null} otherwise
+     * @param accessToken
+     *            the bearer access token
+     * @param refreshToken
+     *            the refresh token
+     * @param expirationTimestamp
+     *            the timestamp when the access token expires
+     */
+    public void setOAuthAuthentication(String tokenEntpoint, String clientId, String clientSecret, String accessToken,
+            String refreshToken, long expirationTimestamp) {
+        if (tokenEntpoint == null || tokenEntpoint.length() == 0) {
+            throw new IllegalArgumentException("Token endpoint must be set!");
+        }
+
+        if (clientId == null || clientId.length() == 0) {
+            throw new IllegalArgumentException("Client ID must be set!");
+        }
+
+        put(SessionParameter.AUTH_HTTP_BASIC, false);
+        put(SessionParameter.AUTH_SOAP_USERNAMETOKEN, false);
+        put(SessionParameter.AUTH_OAUTH_BEARER, false);
+
+        put(SessionParameter.OAUTH_TOKEN_ENDPOINT, tokenEntpoint);
+        put(SessionParameter.OAUTH_CLIENT_ID, clientId);
+
+        if (clientSecret == null) {
+            remove(SessionParameter.OAUTH_CLIENT_SECRET);
+        } else {
+            put(SessionParameter.OAUTH_CLIENT_SECRET, clientSecret);
+        }
+
+        if (accessToken == null) {
+            remove(SessionParameter.OAUTH_ACCESS_TOKEN);
+        } else {
+            put(SessionParameter.OAUTH_ACCESS_TOKEN, accessToken);
+        }
+
+        if (refreshToken == null) {
+            remove(SessionParameter.OAUTH_REFRESH_TOKEN);
+        } else {
+            put(SessionParameter.OAUTH_REFRESH_TOKEN, refreshToken);
+        }
+
+        if (expirationTimestamp < 0) {
+            remove(SessionParameter.OAUTH_EXPIRATION_TIMESTAMP);
+        } else {
+            put(SessionParameter.OAUTH_EXPIRATION_TIMESTAMP, expirationTimestamp);
+        }
+
+        put(SessionParameter.AUTHENTICATION_PROVIDER_CLASS,
+                "org.apache.chemistry.opencmis.client.bindings.spi.OAuthAuthenticationProvider");
     }
 
     /**
