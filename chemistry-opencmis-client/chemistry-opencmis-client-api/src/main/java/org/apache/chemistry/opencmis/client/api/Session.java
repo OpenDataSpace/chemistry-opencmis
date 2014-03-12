@@ -462,6 +462,92 @@ public interface Session extends Serializable {
     CmisObject getObjectByPath(String path, OperationContext context);
 
     /**
+     * Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(ObjectId objectId);
+
+    /**
+     * Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * @param context
+     *            the {@link OperationContext} to use
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(ObjectId objectId, OperationContext context);
+
+    /**
+     * Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * @param major
+     *            if {@code true} the latest major version will be returned,
+     *            otherwise the very last version will be returned
+     * @param context
+     *            the {@link OperationContext} to use
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(ObjectId objectId, boolean major, OperationContext context);
+
+    /**
+     * /** Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(String objectId);
+
+    /**
+     * Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * @param context
+     *            the {@link OperationContext} to use
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(String objectId, OperationContext context);
+
+    /**
+     * Returns the latest version in a version series.
+     * 
+     * @param objectId
+     *            the document ID of an arbitrary version in the version series
+     * @param major
+     *            if {@code true} the latest major version will be returned,
+     *            otherwise the very last version will be returned
+     * @param context
+     *            the {@link OperationContext} to use
+     * 
+     * @return the latest document version
+     * 
+     * @cmis 1.0
+     */
+    Document getLatestDocumentVersion(String objectId, boolean major, OperationContext context);
+
+    /**
      * Removes the given object from the cache.
      * 
      * @param objectId
@@ -490,7 +576,7 @@ public interface Session extends Serializable {
      * @param searchAllVersions
      *            specifies whether non-latest document versions should be
      *            included or not, {@code true} searches all document versions,
-     *            {@false} only searches latest document versions
+     *            {@code false} only searches latest document versions
      * 
      * @cmis 1.0
      */
@@ -505,7 +591,7 @@ public interface Session extends Serializable {
      * @param searchAllVersions
      *            specifies whether non-latest document versions should be
      *            included or not, {@code true} searches all document versions,
-     *            {@false} only searches latest document versions
+     *            {@code false} only searches latest document versions
      * @param context
      *            the operation context to use
      * 
@@ -524,7 +610,7 @@ public interface Session extends Serializable {
      * @param searchAllVersions
      *            specifies whether non-latest document versions should be
      *            included or not, {@code true} searches all document versions,
-     *            {@false} only searches latest document versions
+     *            {@code false} only searches latest document versions
      * @param context
      *            the operation context to use
      * 
