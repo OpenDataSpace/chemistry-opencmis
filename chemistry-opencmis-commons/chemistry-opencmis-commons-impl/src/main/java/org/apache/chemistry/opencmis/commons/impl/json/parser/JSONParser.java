@@ -152,6 +152,8 @@ public class JSONParser {
                         statusStack.addFirst(Integer.valueOf(status));
                         valueStack.addFirst(createArrayContainer(containerFactory));
                         break;
+                    case Yytoken.TYPE_EOF:
+                        return null;
                     default:
                         status = S_IN_ERROR;
                     }// inner switch
