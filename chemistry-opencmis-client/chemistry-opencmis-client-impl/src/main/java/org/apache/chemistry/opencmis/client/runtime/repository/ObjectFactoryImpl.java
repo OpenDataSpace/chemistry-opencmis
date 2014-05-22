@@ -283,6 +283,27 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
             }
         }
 
+        // the type might have changed -> reload type definitions
+        if (definition == null) {
+            TypeDefinition reloadedObjectType = session.getTypeDefinition(objectType.getId(), false);
+            definition = (PropertyDefinition<T>) reloadedObjectType.getPropertyDefinitions().get(pd.getId());
+
+            if (definition == null && secondaryTypes != null) {
+                for (SecondaryType secondaryType : secondaryTypes) {
+                    if (secondaryType != null) {
+                        TypeDefinition reloadedSecondaryType = session.getTypeDefinition(secondaryType.getId(), false);
+                        if (reloadedSecondaryType.getPropertyDefinitions() != null) {
+                            definition = (PropertyDefinition<T>) reloadedSecondaryType.getPropertyDefinitions().get(
+                                    pd.getId());
+                            if (definition != null) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (definition == null) {
             // property without definition
             throw new CmisRuntimeException("Property '" + pd.getId() + "' doesn't exist!");
@@ -317,7 +338,7 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Properties convertProperties(Map<String, ?> properties, ObjectType type,
             Collection<SecondaryType> secondaryTypes, Set<Updatability> updatabilityFilter) {
         // check input
@@ -328,11 +349,14 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
         // get the type
         if (type == null) {
             Object typeId = properties.get(PropertyIds.OBJECT_TYPE_ID);
-            if (!(typeId instanceof String)) {
+
+            if (typeId instanceof String) {
+                type = session.getTypeDefinition(typeId.toString());
+            } else if (typeId instanceof List && !((List) typeId).isEmpty() && ((List) typeId).get(0) instanceof String) {
+                type = session.getTypeDefinition(((List) typeId).get(0).toString());
+            } else {
                 throw new IllegalArgumentException("Type or type property must be set!");
             }
-
-            type = session.getTypeDefinition(typeId.toString());
         }
 
         // get secondary types

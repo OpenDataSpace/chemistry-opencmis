@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.chemistry.opencmis.commons.impl.server.AbstractServiceFactory;
 import org.apache.chemistry.opencmis.commons.server.CallContext;
 import org.apache.chemistry.opencmis.commons.server.CmisService;
-import org.apache.chemistry.opencmis.server.support.CmisServiceWrapper;
+import org.apache.chemistry.opencmis.server.support.wrapper.ConformanceCmisServiceWrapper;
 
 /**
  * CMIS Service Factory.
@@ -17,7 +17,7 @@ import org.apache.chemistry.opencmis.server.support.CmisServiceWrapper;
 public class ${projectPrefix}CmisServiceFactory extends AbstractServiceFactory {
 
     /** Default maxItems value for getTypeChildren()}. */
-    private static final BigInteger DEFAULT_MAX_ITEMS_TYPES = BigInteger.valueOf(50);
+    private static final BigInteger DEFAULT_MAX_ITEMS_TYPES = BigInteger.valueOf(1000);
 
     /** Default depth value for getTypeDescendants(). */
     private static final BigInteger DEFAULT_DEPTH_TYPES = BigInteger.valueOf(-1);
@@ -26,7 +26,7 @@ public class ${projectPrefix}CmisServiceFactory extends AbstractServiceFactory {
      * Default maxItems value for getChildren() and other methods returning
      * lists of objects.
      */
-    private static final BigInteger DEFAULT_MAX_ITEMS_OBJECTS = BigInteger.valueOf(200);
+    private static final BigInteger DEFAULT_MAX_ITEMS_OBJECTS = BigInteger.valueOf(100000);
 
     /** Default depth value for getDescendants(). */
     private static final BigInteger DEFAULT_DEPTH_OBJECTS = BigInteger.valueOf(10);
@@ -51,15 +51,15 @@ public class ${projectPrefix}CmisServiceFactory extends AbstractServiceFactory {
         // (can also be pooled or stored in a ThreadLocal)
         ${projectPrefix}CmisService service = new ${projectPrefix}CmisService();
 
-        // add the CMIS service wrapper
+        // add the conformance CMIS service wrapper
         // (The wrapper catches invalid CMIS requests and sets default values
         // for parameters that have not been provided by the client.)
-        CmisServiceWrapper<${projectPrefix}CmisService> wrapperService = 
-                new CmisServiceWrapper<${projectPrefix}CmisService>(service,
-                DEFAULT_MAX_ITEMS_TYPES, DEFAULT_DEPTH_TYPES, DEFAULT_MAX_ITEMS_OBJECTS, DEFAULT_DEPTH_OBJECTS);
+        ConformanceCmisServiceWrapper wrapperService = 
+                new ConformanceCmisServiceWrapper(service, DEFAULT_MAX_ITEMS_TYPES, DEFAULT_DEPTH_TYPES, 
+                        DEFAULT_MAX_ITEMS_OBJECTS, DEFAULT_DEPTH_OBJECTS);
 
         // hand over the call context to the service object
-        service.setCallContext(context);
+        wrapperService.setCallContext(context);
 
         return wrapperService;
     }

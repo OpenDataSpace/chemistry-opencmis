@@ -25,6 +25,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
@@ -203,17 +206,41 @@ public class AtomEntryParserTest {
         assertNull(aep.getProperties());
     }
 
-    @Test
+    @Test(expected = XMLStreamException.class)
     public void testEmptyStream() throws Exception {
         ThresholdOutputStreamFactory streamFactory = ThresholdOutputStreamFactory.newInstance(null, THRESHOLD,
                 MAX_SIZE, false);
-        AtomEntryParser aep = new AtomEntryParser(new ByteArrayInputStream(new byte[0]), streamFactory);
+        new AtomEntryParser(new ByteArrayInputStream(new byte[0]), streamFactory);
+    }
 
-        assertNotNull(aep);
-        assertNull(aep.getId());
-        assertNull(aep.getObject());
-        assertNull(aep.getContentStream());
-        assertNull(aep.getProperties());
+    @Test
+    public void testBigStream() throws Exception {
+        byte[] begin = IOUtils
+                .toUTF8Bytes("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                        + "<entry xmlns=\"http://www.w3.org/2005/Atom\" xmlns:app=\"http://www.w3.org/2007/app\" xmlns:cmisra=\"http://docs.oasis-open.org/ns/cmis/restatom/200908/\">"
+                        + "<cmisra:content><cmisra:mediatype>video/raw</cmisra:mediatype><cmisra:base64>");
+        byte[] end = IOUtils
+                .toUTF8Bytes("</cmisra:base64></cmisra:content><cmisra:object xmlns:cmis=\"http://docs.oasis-open.org/ns/cmis/core/200908/\">"
+                        + "<cmis:properties></cmis:properties></cmisra:object><title>some.file</title></entry>");
+
+        int contenSize = 50 * 1024 * 1024;
+        int base64Size = 4 * (contenSize + 2 - ((contenSize + 2) % 3)) / 3;
+
+        byte[] entry = new byte[begin.length + base64Size + end.length];
+
+        System.arraycopy(begin, 0, entry, 0, begin.length);
+        System.arraycopy(end, 0, entry, entry.length - end.length, end.length);
+        Arrays.fill(entry, begin.length, entry.length - end.length, (byte) 'a');
+
+        ThresholdOutputStreamFactory streamFactory = ThresholdOutputStreamFactory.newInstance(null, THRESHOLD,
+                MAX_SIZE, false);
+        AtomEntryParser aep = new AtomEntryParser(new ByteArrayInputStream(entry), streamFactory);
+        ContentStream contentStream = aep.getContentStream();
+
+        assertNotNull(contentStream);
+        assertNotNull(contentStream.getStream());
+
+        contentStream.getStream().close();
     }
 
     private static byte[] parse(byte[] entry) throws Exception {
@@ -228,6 +255,8 @@ public class AtomEntryParserTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         IOUtils.copy(contentStream.getStream(), baos);
+
+        contentStream.getStream().close();
 
         return baos.toByteArray();
     }

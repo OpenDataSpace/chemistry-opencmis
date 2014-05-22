@@ -230,7 +230,7 @@ public class FileShareRepository {
         capabilities.setCapabilityRendition(CapabilityRenditions.NONE);
 
         if (cmisVersion != CmisVersion.CMIS_1_0) {
-            capabilities.setOrderByCapability(CapabilityOrderBy.NONE);
+            capabilities.setCapabilityOrderBy(CapabilityOrderBy.NONE);
 
             NewTypeSettableAttributesImpl typeSetAttributes = new NewTypeSettableAttributesImpl();
             typeSetAttributes.setCanSetControllableAcl(false);
@@ -438,7 +438,7 @@ public class FileShareRepository {
         }
 
         // check versioning state
-        if (VersioningState.NONE != versioningState) {
+        if (!(VersioningState.NONE == versioningState || versioningState == null)) {
             throw new CmisConstraintException("Versioning not supported!");
         }
 
@@ -504,7 +504,7 @@ public class FileShareRepository {
         checkUser(context, true);
 
         // check versioning state
-        if (VersioningState.NONE != versioningState) {
+        if (!(VersioningState.NONE == versioningState || versioningState == null)) {
             throw new CmisConstraintException("Versioning not supported!");
         }
 
@@ -1975,8 +1975,7 @@ public class FileShareRepository {
 
         for (Map.Entry<String, Boolean> ue : readWriteUserMap.entrySet()) {
             // create principal
-            AccessControlPrincipalDataImpl principal = new AccessControlPrincipalDataImpl();
-            principal.setPrincipalId(ue.getKey());
+            AccessControlPrincipalDataImpl principal = new AccessControlPrincipalDataImpl(ue.getKey());
 
             // create ACE
             AccessControlEntryImpl entry = new AccessControlEntryImpl();

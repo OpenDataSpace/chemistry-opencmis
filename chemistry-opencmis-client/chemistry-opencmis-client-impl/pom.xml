@@ -84,6 +84,7 @@
                            <attach>true</attach>
                            <descriptors>
                                <descriptor>src/main/assembly/client-with-dependencies-assembly.xml</descriptor>
+                               <descriptor>src/main/assembly/client-with-ri-dependencies-assembly.xml</descriptor>
                                <descriptor>src/main/assembly/client-with-cxf-dependencies-assembly.xml</descriptor>
                            </descriptors>
                        </configuration>
@@ -115,11 +116,24 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>woodstox-core-asl</artifactId>
+            <version>${woodstox.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
             <version>${osgi.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Sun RI -->
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>${jaxws-rt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- CXF -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
@@ -132,6 +146,13 @@
             <version>${cxf.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-ws-policy</artifactId>
+            <version>${cxf.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Test -->
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>

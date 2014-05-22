@@ -76,18 +76,40 @@ public class ContentStreamHashImpl implements ContentStreamHash {
      * @param hash
      *            the hash value
      */
-    public ContentStreamHashImpl(String algorithm, String hash) {
+    public ContentStreamHashImpl(String algorithm, String hashStr) {
         if (algorithm == null || algorithm.trim().length() == 0) {
             throw new IllegalArgumentException("Algorithm must be set!");
         }
 
-        if (hash == null || hash.trim().length() == 0) {
+        if (hashStr == null || hashStr.trim().length() == 0) {
             throw new IllegalArgumentException("Hash must be set!");
         }
 
         this.algorithm = algorithm.toLowerCase(Locale.ENGLISH);
-        this.hash = hash.replaceAll("\\s", "").toLowerCase(Locale.ENGLISH);
-        this.propertyValue = "{" + algorithm + "}" + hash;
+        this.hash = hashStr.replaceAll("\\s", "").toLowerCase(Locale.ENGLISH);
+        this.propertyValue = "{" + this.algorithm + "}" + this.hash;
+    }
+
+    /**
+     * Constructs an object from the algorithm and hash.
+     * 
+     * @param algorithm
+     *            the algorithm
+     * @param hashBytes
+     *            the hash value as byte array
+     */
+    public ContentStreamHashImpl(String algorithm, byte[] hashBytes) {
+        if (algorithm == null || algorithm.trim().length() == 0) {
+            throw new IllegalArgumentException("Algorithm must be set!");
+        }
+
+        if (hashBytes == null || hashBytes.length == 0) {
+            throw new IllegalArgumentException("Hash must be set!");
+        }
+
+        this.algorithm = algorithm.toLowerCase(Locale.ENGLISH);
+        this.hash = byteArrayToHexString(hashBytes);
+        this.propertyValue = "{" + this.algorithm + "}" + this.hash;
     }
 
     public String getPropertyValue() {
@@ -100,6 +122,40 @@ public class ContentStreamHashImpl implements ContentStreamHash {
 
     public String getHash() {
         return hash;
+    }
+
+    @Override
+    public int hashCode() {
+        return propertyValue.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        ContentStreamHashImpl other = (ContentStreamHashImpl) obj;
+        if (propertyValue == null) {
+            if (other.propertyValue != null) {
+                return false;
+            }
+        } else if (!propertyValue.equals(other.propertyValue)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return propertyValue;
     }
 
     /**
@@ -139,7 +195,7 @@ public class ContentStreamHashImpl implements ContentStreamHash {
         List<ContentStreamHash> result = new ArrayList<ContentStreamHash>();
 
         for (int i = 0; i < md.length; i++) {
-            result.add(new ContentStreamHashImpl(algorithm[i], byteArrayToHexString(md[i].digest())));
+            result.add(new ContentStreamHashImpl(algorithm[i], md[i].digest()));
         }
 
         return result;

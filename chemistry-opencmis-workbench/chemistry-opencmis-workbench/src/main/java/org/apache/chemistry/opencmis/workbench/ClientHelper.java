@@ -79,7 +79,6 @@ import org.apache.chemistry.opencmis.client.api.Rendition;
 import org.apache.chemistry.opencmis.client.api.Session;
 import org.apache.chemistry.opencmis.commons.SessionParameter;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
-import org.apache.chemistry.opencmis.commons.enums.BindingType;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisBaseException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisConstraintException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
@@ -351,7 +350,7 @@ public final class ClientHelper {
         OutputStream out = null;
         try {
             out = new FileOutputStream(file);
-            IOUtils.copy(in, out, BUFFER_SIZE);
+            IOUtils.copy(new LoggingInputStream(in, file.getName()), out, BUFFER_SIZE);
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(out);
@@ -622,7 +621,7 @@ public final class ClientHelper {
             addConsoleMenu(cmisMenu, "OpenCMIS Documentation",
                     new URI("http://chemistry.apache.org/java/opencmis.html"));
             addConsoleMenu(cmisMenu, "OpenCMIS Client API JavaDoc", new URI(
-                    "http://chemistry.apache.org/java/0.10.0/maven/apidocs/"));
+                    "http://chemistry.apache.org/java/0.11.0/maven/apidocs/"));
             cmisMenu.addSeparator();
             JMenuItem menuItem = new JMenuItem("CMIS Session Details");
             menuItem.addActionListener(new ActionListener() {

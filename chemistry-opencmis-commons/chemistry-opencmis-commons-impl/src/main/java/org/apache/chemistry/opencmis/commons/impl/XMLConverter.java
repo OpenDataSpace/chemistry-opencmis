@@ -1266,7 +1266,7 @@ public final class XMLConverter {
                 }
 
                 if (isTag(name, TAG_CAP_ORDER_BY)) {
-                    target.setOrderByCapability(readEnum(parser, CapabilityOrderBy.class));
+                    target.setCapabilityOrderBy(readEnum(parser, CapabilityOrderBy.class));
                     return true;
                 }
 
@@ -2398,7 +2398,7 @@ public final class XMLConverter {
                 throws XMLStreamException {
             if (isCmisNamespace(name)) {
                 if (isTag(name, TAG_ACE_PRINCIPAL_ID)) {
-                    target.setPrincipalId(readText(parser));
+                    target.setId(readText(parser));
                     return true;
                 }
             }

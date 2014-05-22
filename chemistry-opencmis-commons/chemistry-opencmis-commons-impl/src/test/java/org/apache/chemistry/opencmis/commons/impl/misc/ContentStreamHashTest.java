@@ -19,7 +19,9 @@
 package org.apache.chemistry.opencmis.commons.impl.misc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -40,20 +42,29 @@ public class ContentStreamHashTest {
         assertEquals("0123456789abcdef", hash1.getHash());
 
         assertEquals(hash1.getPropertyValue(), hash2.getPropertyValue());
-        assertEquals(hash2.getAlgorithm(), hash2.getAlgorithm());
-        assertEquals(hash2.getHash(), hash2.getHash());
+        assertEquals(hash1.getAlgorithm(), hash2.getAlgorithm());
+        assertEquals(hash1.getHash(), hash2.getHash());
     }
 
     @Test
     public void testHashCorrected() throws Exception {
         ContentStreamHashImpl hash1 = new ContentStreamHashImpl("{alg} 01 23 45 67 89 AB CD EF ");
         ContentStreamHashImpl hash2 = new ContentStreamHashImpl("ALG", "0123 4567 89ab cdef");
+        ContentStreamHashImpl hash3 = new ContentStreamHashImpl("aLg", new byte[] { (byte) 0x01, (byte) 0x23,
+                (byte) 0x45, (byte) 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef });
 
         assertEquals("alg", hash1.getAlgorithm());
         assertEquals("0123456789abcdef", hash1.getHash());
 
-        assertEquals(hash2.getAlgorithm(), hash2.getAlgorithm());
-        assertEquals(hash2.getHash(), hash2.getHash());
+        assertEquals(hash1.getAlgorithm(), hash2.getAlgorithm());
+        assertEquals(hash1.getHash(), hash2.getHash());
+
+        assertEquals(hash1.getAlgorithm(), hash3.getAlgorithm());
+        assertEquals(hash1.getHash(), hash3.getHash());
+
+        assertFalse(hash1.equals(hash2));
+        assertFalse(hash1.equals(hash2));
+        assertTrue(hash2.equals(hash3));
     }
 
     @Test

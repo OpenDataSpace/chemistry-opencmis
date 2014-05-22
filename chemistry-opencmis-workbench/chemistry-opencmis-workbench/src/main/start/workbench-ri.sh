@@ -1,4 +1,4 @@
-# #!/bin/sh
+#!/bin/sh
 
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -48,6 +48,6 @@ done
 
 
 JAVA_PROXY_CONF=$($JAVA -classpath $WCP org.apache.chemistry.opencmis.workbench.ProxyDetector -j -s)
-JAVA_OPTS="$JAVA_PROXY_CONF"
+JAVA_OPTS="$JAVA_PROXY_CONF -Dorg.apache.chemistry.opencmis.binding.webservices.jaxws.impl=sunri"
 
 exec $JAVA $JAVA_OPTS $CUSTOM_JAVA_OPTS -classpath $WCP org.apache.chemistry.opencmis.workbench.Workbench &

@@ -16,33 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.chemistry.opencmis.commons.impl;
+package org.apache.chemistry.opencmis.commons.data;
 
-import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
-import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
-
-/**
- * Temporary type cache used for one call.
- */
-public interface TypeCache {
+public interface MutablePrincipal extends Principal {
 
     /**
-     * Gets the type definition by type ID.
+     * Sets the principal ID.
+     * 
+     * @param principalId
+     *            the principal ID
      */
-    TypeDefinition getTypeDefinition(String typeId);
-
-    /**
-     * Reloads the type definition by type ID.
-     */
-    TypeDefinition reloadTypeDefinition(String typeId);
-    
-    /**
-     * Gets the type definition of an object.
-     */
-    TypeDefinition getTypeDefinitionForObject(String objectId);
-
-    /**
-     * Finds the property definition in all cached types.
-     */
-    PropertyDefinition<?> getPropertyDefinition(String propId);
+    void setId(String principalId);
 }
