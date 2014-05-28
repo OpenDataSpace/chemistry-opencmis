@@ -247,11 +247,14 @@
     <build>
         <pluginManagement>
             <plugins>
+
                 <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=406507#c3 -->
+
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.3.2</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr3-maven-plugin</artifactId>
@@ -289,11 +292,16 @@
                     <artifactId>maven-remote-resources-plugin</artifactId>
                     <version>1.4</version>
                 </plugin>
-                <!-- This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+
+                <!-- This plugin's configuration is used to store Eclipse m2e
+                     settings only. It has no influence on the Maven build
+                     itself. -->
+
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
                     <version>1.0.0</version>
+
                     <configuration>
                         <lifecycleMappingMetadata>
                             <pluginExecutions>
@@ -301,24 +309,29 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.apache.maven.plugins</groupId>
                                         <artifactId>maven-antrun-plugin</artifactId>
-                                        <versionRange>[1.5,)</versionRange>
+                                        <versionRange>[1.5,1.7]</versionRange>
+
                                         <goals>
                                             <goal>run</goal>
                                         </goals>
                                     </pluginExecutionFilter>
+
                                     <action>
                                         <ignore/>
                                     </action>
                                 </pluginExecution>
+
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.jvnet.jax-ws-commons</groupId>
                                         <artifactId>jaxws-maven-plugin</artifactId>
-                                        <versionRange>[2.2,)</versionRange>
+                                        <versionRange>[2.2]</versionRange>
+
                                         <goals>
                                             <goal>wsimport</goal>
                                         </goals>
                                     </pluginExecutionFilter>
+
                                     <action>
                                         <ignore/>
                                     </action>
@@ -427,6 +440,7 @@
                         <id>attach-sources</id>
                         <goals>
                             <goal>jar-no-fork</goal>
+                            <goal>test-jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -758,3 +772,5 @@
         </profile>
     </profiles>
 </project>
+
+<!-- vi:set expandtab shiftwidth=4 tabstop=4: -->
