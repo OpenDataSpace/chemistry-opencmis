@@ -294,7 +294,30 @@ public class ObjectService {
             String newObjectId = (objectIdHolder.getValue() == null ? objectId : objectIdHolder.getValue());
             String location = compileUrl(compileBaseUrl(request, repositoryId), RESOURCE_CONTENT, newObjectId);
 
-            response.setStatus(HttpServletResponse.SC_CREATED);
+            // set status
+            if (newObjectId.equals(objectId)) {
+                if (Boolean.TRUE.equals(appendFlag)) {
+                    // append stream: no new version -> OK
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength(0);
+                } else {
+                    if (!Boolean.FALSE.equals(overwriteFlag)) {
+                        // set stream: no new version and overwrite ->
+                        // OK: if the document had a stream,
+                        // CREATED: if the document had no stream
+                        // ... but we don't know, ... OK is more likely ...
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setContentLength(0);
+                    } else {
+                        // set stream: no new version and not overwrite ->
+                        // CREATED (the document hasn't had a stream)
+                        response.setStatus(HttpServletResponse.SC_CREATED);
+                    }
+                }
+            } else {
+                // new version created -> CREATED
+                response.setStatus(HttpServletResponse.SC_CREATED);
+            }
             response.setHeader("Content-Location", location);
             response.setHeader("Location", location);
         }
@@ -528,6 +551,14 @@ public class ObjectService {
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+
+                if (content.getBigLength() != null && content.getBigLength().signum() == 1) {
+                    BigInteger firstBytePos = (offset == null ? BigInteger.ZERO : offset);
+                    BigInteger lastBytePos = firstBytePos.add(content.getBigLength().subtract(BigInteger.ONE));
+
+                    response.setHeader("Content-Range",
+                            "bytes " + firstBytePos.toString() + "-" + lastBytePos.toString() + "/*");
+                }
             }
             response.setContentType(contentType);
 
