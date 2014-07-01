@@ -84,7 +84,7 @@ public class PropertyImpl<T> extends AbstractPropertyData<T> implements Property
     public <U> U getValue() {
         List<T> values = getValues();
         if (propertyDefinition.getCardinality() == Cardinality.SINGLE) {
-            return values.size() == 0 ? null : (U) values.get(0);
+            return values.isEmpty() ? null : (U) values.get(0);
         } else {
             return (U) values;
         }
@@ -92,7 +92,7 @@ public class PropertyImpl<T> extends AbstractPropertyData<T> implements Property
 
     public String getValueAsString() {
         List<T> values = getValues();
-        if (values.size() == 0) {
+        if (values.isEmpty()) {
             return null;
         }
 

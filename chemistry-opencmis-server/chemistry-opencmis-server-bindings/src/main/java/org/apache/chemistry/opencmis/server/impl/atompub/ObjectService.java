@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.server.impl.atompub;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.isNotEmpty;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -292,7 +294,8 @@ public class ObjectService {
 
             // set headers
             String newObjectId = (objectIdHolder.getValue() == null ? objectId : objectIdHolder.getValue());
-            String location = compileUrl(compileBaseUrl(request, repositoryId), RESOURCE_CONTENT, newObjectId);
+            String contentLocation = compileUrl(compileBaseUrl(request, repositoryId), RESOURCE_CONTENT, newObjectId);
+            String location = compileUrl(compileBaseUrl(request, repositoryId), RESOURCE_OBJECTBYID, newObjectId);
 
             // set status
             if (newObjectId.equals(objectId)) {
@@ -318,7 +321,7 @@ public class ObjectService {
                 // new version created -> CREATED
                 response.setStatus(HttpServletResponse.SC_CREATED);
             }
-            response.setHeader("Content-Location", location);
+            response.setHeader("Content-Location", contentLocation);
             response.setHeader("Location", location);
         }
     }
@@ -345,7 +348,7 @@ public class ObjectService {
             FailedToDeleteData ftd = service.deleteTree(repositoryId, folderId, allVersions, unfileObjects,
                     continueOnFailure, null);
 
-            if ((ftd != null) && (ftd.getIds() != null) && (ftd.getIds().size() > 0)) {
+            if (ftd != null && isNotEmpty(ftd.getIds())) {
                 // print ids that could not be deleted
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType("text/plain");

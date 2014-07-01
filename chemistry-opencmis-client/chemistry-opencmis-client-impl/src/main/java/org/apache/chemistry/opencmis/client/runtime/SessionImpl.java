@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.client.runtime;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.isNullOrEmpty;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +28,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -392,7 +393,7 @@ public class SessionImpl implements Session {
                         ctxt.isIncludeAcls(), BigInteger.valueOf(this.maxNumItems), null);
 
                 // convert type definitions
-                LinkedList<ChangeEvent> page = new LinkedList<ChangeEvent>();
+                List<ChangeEvent> page = new ArrayList<ChangeEvent>();
                 for (ObjectData objectData : objectList.getObjects()) {
                     page.add(of.convertChangeEvent(objectData));
                 }
@@ -400,7 +401,7 @@ public class SessionImpl implements Session {
                 if (!firstPage) {
                     // the last entry of the previous page is repeated
                     // -> remove the first entry
-                    page.removeFirst();
+                    page.remove(0);
                 }
                 firstPage = false;
 
@@ -1035,7 +1036,7 @@ public class SessionImpl implements Session {
 
     public ObjectId createDocument(Map<String, ?> properties, ObjectId folderId, ContentStream contentStream,
             VersioningState versioningState, List<Policy> policies, List<Ace> addAces, List<Ace> removeAces) {
-        if ((properties == null) || (properties.isEmpty())) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Properties must not be empty!");
         }
 
@@ -1098,7 +1099,7 @@ public class SessionImpl implements Session {
         if ((folderId == null) || (folderId.getId() == null)) {
             throw new IllegalArgumentException("Folder ID must be set!");
         }
-        if ((properties == null) || (properties.isEmpty())) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Properties must not be empty!");
         }
 
@@ -1116,7 +1117,7 @@ public class SessionImpl implements Session {
 
     public ObjectId createPolicy(Map<String, ?> properties, ObjectId folderId, List<Policy> policies,
             List<Ace> addAces, List<Ace> removeAces) {
-        if ((properties == null) || (properties.isEmpty())) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Properties must not be empty!");
         }
 
@@ -1134,7 +1135,7 @@ public class SessionImpl implements Session {
 
     public ObjectId createItem(Map<String, ?> properties, ObjectId folderId, List<Policy> policies, List<Ace> addAces,
             List<Ace> removeAces) {
-        if ((properties == null) || (properties.isEmpty())) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Properties must not be empty!");
         }
 
@@ -1152,7 +1153,7 @@ public class SessionImpl implements Session {
 
     public ObjectId createRelationship(Map<String, ?> properties, List<Policy> policies, List<Ace> addAces,
             List<Ace> removeAces) {
-        if ((properties == null) || (properties.isEmpty())) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Properties must not be empty!");
         }
 
@@ -1247,7 +1248,7 @@ public class SessionImpl implements Session {
             throw new CmisNotSupportedException("This method is not supported for CMIS 1.0 repositories.");
         }
 
-        if ((objects == null) || objects.isEmpty()) {
+        if (isNullOrEmpty(properties)) {
             throw new IllegalArgumentException("Objects must be set!");
         }
 

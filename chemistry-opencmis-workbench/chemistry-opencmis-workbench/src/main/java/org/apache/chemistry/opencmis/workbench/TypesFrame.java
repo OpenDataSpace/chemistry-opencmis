@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.workbench;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.isNotEmpty;
+
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -178,7 +180,8 @@ public class TypesFrame extends JFrame {
                 int chooseResult = fileChooser.showDialog(getRootPane(), "Load XML");
                 if (chooseResult == JFileChooser.APPROVE_OPTION) {
                     try {
-                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()));
+                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()),
+                                64 * 1024);
                         TypeDefinition type = TypeUtils.readFromXML(in);
                         in.close();
 
@@ -204,7 +207,8 @@ public class TypesFrame extends JFrame {
                 int chooseResult = fileChooser.showDialog(getRootPane(), "Load JSON");
                 if (chooseResult == JFileChooser.APPROVE_OPTION) {
                     try {
-                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()));
+                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()),
+                                64 * 1024);
                         TypeDefinition type = TypeUtils.readFromJSON(in);
                         in.close();
 
@@ -267,7 +271,8 @@ public class TypesFrame extends JFrame {
                 int chooseResult = fileChooser.showDialog(getRootPane(), "Load XML");
                 if (chooseResult == JFileChooser.APPROVE_OPTION) {
                     try {
-                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()));
+                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()),
+                                64 * 1024);
                         TypeDefinition type = TypeUtils.readFromXML(in);
                         in.close();
 
@@ -293,7 +298,8 @@ public class TypesFrame extends JFrame {
                 int chooseResult = fileChooser.showDialog(getRootPane(), "Load JSON");
                 if (chooseResult == JFileChooser.APPROVE_OPTION) {
                     try {
-                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()));
+                        InputStream in = new BufferedInputStream(new FileInputStream(fileChooser.getSelectedFile()),
+                                64 * 1024);
                         TypeDefinition type = TypeUtils.readFromJSON(in);
                         in.close();
 
@@ -417,7 +423,7 @@ public class TypesFrame extends JFrame {
 
         List<ValidationError> typeResult = TypeUtils.validateTypeDefinition(type);
 
-        if (typeResult.size() > 0) {
+        if (isNotEmpty(typeResult)) {
             sb.append("\nType Definition:\n");
 
             for (ValidationError error : typeResult) {
@@ -431,7 +437,7 @@ public class TypesFrame extends JFrame {
             for (PropertyDefinition<?> propDef : type.getPropertyDefinitions().values()) {
                 List<ValidationError> propResult = TypeUtils.validatePropertyDefinition(propDef);
 
-                if (propResult.size() > 0) {
+                if (isNotEmpty(propResult)) {
                     sb.append("\nProperty Definition '" + propDef.getId() + "':\n");
 
                     for (ValidationError error : propResult) {

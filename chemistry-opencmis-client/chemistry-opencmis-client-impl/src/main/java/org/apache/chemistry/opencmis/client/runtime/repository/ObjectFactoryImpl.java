@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.client.runtime.repository;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.*;
+
 import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -466,7 +468,7 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
 
             // assemble property
             PropertyData<?> propertyData = null;
-            Object firstValue = (values == null || values.isEmpty() ? null : values.get(0));
+            Object firstValue = (isNullOrEmpty(values) ? null : values.get(0));
 
             if (definition instanceof PropertyStringDefinition) {
                 if (firstValue == null) {
@@ -591,7 +593,7 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
         if (objectData.getBaseTypeId() == null) {
             throw new IllegalArgumentException("Base type ID property not set!");
         }
-        
+
         ObjectType type = getTypeFromObjectData(objectData);
 
         /* determine type */
@@ -643,7 +645,7 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
 
             if (properties.containsKey(PropertyIds.OBJECT_ID)) {
                 List<?> objectIdList = properties.get(PropertyIds.OBJECT_ID);
-                if ((objectIdList != null) && (!objectIdList.isEmpty())) {
+                if (isNotEmpty(objectIdList)) {
                     objectId = objectIdList.get(0).toString();
                 }
             }
@@ -684,11 +686,11 @@ public class ObjectFactoryImpl implements ObjectFactory, Serializable {
 
     private void throwWrongTypeError(Object obj, String type, Class<?> clazz, String id) {
         String expectedTypes;
-        if (clazz.equals(BigInteger.class)) {
+        if (BigInteger.class.isAssignableFrom(clazz)) {
             expectedTypes = "<BigInteger, Byte, Short, Integer, Long>";
-        } else if (clazz.equals(BigDecimal.class)) {
+        } else if (BigDecimal.class.isAssignableFrom(clazz)) {
             expectedTypes = "<BigDecimal, Double, Float, Byte, Short, Integer, Long>";
-        } else if (clazz.equals(GregorianCalendar.class)) {
+        } else if (GregorianCalendar.class.isAssignableFrom(clazz)) {
             expectedTypes = "<java.util.GregorianCalendar, java.util.Date>";
         } else {
             expectedTypes = clazz.getName();

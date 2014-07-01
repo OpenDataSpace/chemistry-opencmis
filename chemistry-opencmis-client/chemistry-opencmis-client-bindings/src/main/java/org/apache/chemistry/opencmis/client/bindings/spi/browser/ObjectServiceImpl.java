@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.client.bindings.spi.browser;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.isNullOrEmpty;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -416,7 +418,7 @@ public class ObjectServiceImpl extends AbstractBrowserBindingService implements 
             List<BulkUpdateObjectIdAndChangeToken> objectIdAndChangeToken, Properties properties,
             List<String> addSecondaryTypeIds, List<String> removeSecondaryTypeIds, ExtensionsData extension) {
         // we need object ids
-        if ((objectIdAndChangeToken == null) || (objectIdAndChangeToken.size() == 0)) {
+        if (isNullOrEmpty(objectIdAndChangeToken)) {
             throw new CmisInvalidArgumentException("Object ids must be set!");
         }
 
@@ -510,7 +512,7 @@ public class ObjectServiceImpl extends AbstractBrowserBindingService implements 
 
         if (resp.hasResponseStream()) {
             try {
-                InputStream responseStream = IOUtils.checkForBytes(resp.getStream(), 4096);
+                InputStream responseStream = IOUtils.checkForBytes(resp.getStream(), 8192);
                 if (responseStream != null) {
                     Map<String, Object> json = parseObject(responseStream, resp.getCharset());
                     return JSONConverter.convertFailedToDelete(json);

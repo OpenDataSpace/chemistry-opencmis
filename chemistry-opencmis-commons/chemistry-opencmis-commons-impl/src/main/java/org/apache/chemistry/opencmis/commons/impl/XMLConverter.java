@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1020,7 +1019,7 @@ public final class XMLConverter {
             return;
         }
 
-        LinkedList<String> ns = new LinkedList<String>();
+        List<String> ns = new ArrayList<String>();
 
         if (source.getExtensions() != null) {
             for (CmisExtensionElement element : source.getExtensions()) {
@@ -1033,7 +1032,7 @@ public final class XMLConverter {
         }
     }
 
-    private static void writeExtensionElement(XMLStreamWriter writer, CmisExtensionElement source, LinkedList<String> ns)
+    private static void writeExtensionElement(XMLStreamWriter writer, CmisExtensionElement source, List<String> ns)
             throws XMLStreamException {
         if (source == null || source.getName() == null) {
             return;
@@ -1083,7 +1082,7 @@ public final class XMLConverter {
         writer.writeEndElement();
 
         if (addedNamespace) {
-            ns.removeLast();
+            ns.remove(ns.size() - 1);
         }
     }
 
@@ -2168,7 +2167,7 @@ public final class XMLConverter {
         protected abstract void addValue(XMLStreamReader parser, ChoiceImpl<T> target) throws XMLStreamException;
 
         protected abstract void addChoice(XMLStreamReader parser, ChoiceImpl<T> target) throws XMLStreamException;
-    };
+    }
 
     // ---------------------------------
     // --- objects and lists parsers ---
@@ -2600,7 +2599,7 @@ public final class XMLConverter {
             return false;
         }
 
-    };
+    }
 
     private abstract static class PropertyStringXMLWalker<T extends AbstractPropertyData<String>> extends
             PropertyXMLWalker<T> {

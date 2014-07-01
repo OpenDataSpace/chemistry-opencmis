@@ -16,32 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.chemistry.opencmis.server.support.query;
+package org.apache.chemistry.opencmis.commons.impl;
 
-public class FunctionReference extends CmisSelector {
+import java.util.Collection;
+import java.util.Map;
 
-    public enum CmisQlFunction {
-        SCORE
+public final class CollectionsHelper {
+
+    private CollectionsHelper() {
     }
 
-    private final CmisQlFunction function;
-
-    public FunctionReference(CmisQlFunction func) {
-        this.function = func;
+    public static boolean isNotEmpty(Collection<?> col) {
+        return col != null && !col.isEmpty();
     }
 
-    public CmisQlFunction getFunction() {
-        return function;
+    public static boolean isNotEmpty(Map<?, ?> map) {
+        return map != null && !map.isEmpty();
     }
 
-    @Override
-    public String toString() {
-        return "FunctionReference(" + function.toString() + ")";
+    public static boolean isNullOrEmpty(Collection<?> col) {
+        return col == null || col.isEmpty();
     }
 
-    @Override
-    public String getName() {
-        return function.toString();
+    public static boolean isNullOrEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
     }
-
 }

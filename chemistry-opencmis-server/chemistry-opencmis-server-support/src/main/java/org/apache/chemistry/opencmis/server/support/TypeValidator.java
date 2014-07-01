@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.server.support;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.*;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -46,8 +48,8 @@ import org.apache.chemistry.opencmis.commons.exceptions.CmisConstraintException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisInvalidArgumentException;
 
 public final class TypeValidator {
-    
-    private TypeValidator() {        
+
+    private TypeValidator() {
     }
 
     public static void validateRequiredSystemProperties(Properties properties) {
@@ -97,7 +99,7 @@ public final class TypeValidator {
                 }
             }
 
-            if (propDef.getChoices() != null && propDef.getChoices().size() > 0) {
+            if (isNotEmpty(propDef.getChoices())) {
                 validateChoices(propDef, prop);
             }
         }
@@ -114,8 +116,7 @@ public final class TypeValidator {
             // check if value is in list
             if (hasMultiValueChoiceLists) {
                 // do a complex check if this combination of actual values is
-                // allowed
-                // check if value is in list
+                // allowed check if value is in list
                 isAllowedValue = false;
                 List<?> actualValues = prop.getValues();
                 for (Choice<?> allowedValue : propDef.getChoices()) {
@@ -167,10 +168,10 @@ public final class TypeValidator {
         private List<T> getAllowedValues(List<Choice<T>> choices) {
             List<T> allowedValues = new ArrayList<T>(choices.size());
             for (Choice<T> choice : choices) {
-                if (choice.getValue() != null && !choice.getValue().isEmpty()) {
+                if (isNotEmpty(choice.getValue())) {
                     allowedValues.add(choice.getValue().get(0));
                 }
-                if (choice.getChoice() != null && !choice.getChoice().isEmpty()) {
+                if (isNotEmpty(choice.getChoice())) {
                     List<Choice<T>> x = choice.getChoice();
                     allowedValues.addAll(getAllowedValues(x));
                 }
@@ -257,7 +258,7 @@ public final class TypeValidator {
                 String propertyId = prop.getId();
                 if (null == propertyId) {
                     throw new CmisInvalidArgumentException("Property id cannot be null");
-                }                
+                }
                 BaseTypeId baseTypeId = typeDef.getBaseTypeId();
 
                 // check that all mandatory attributes are present
@@ -373,7 +374,7 @@ public final class TypeValidator {
     }
 
     protected static void validateAllowedTypes(TypeDefinition typeDef, List<String> allowedTypes, String description) {
-        if (null == allowedTypes || allowedTypes.size() == 0) {
+        if (isNullOrEmpty(allowedTypes)) {
             return; // all types are allowed
         }
 
@@ -528,7 +529,7 @@ public final class TypeValidator {
             } else if (propertyId.equals(PropertyIds.PATH)) {
                 return true;
             }
-            
+
             return false;
         } else if (baseTypeId.equals(BaseTypeId.CMIS_POLICY)) {
             if (propertyId.equals(PropertyIds.SOURCE_ID)) {
@@ -541,7 +542,7 @@ public final class TypeValidator {
             if (propertyId.equals(PropertyIds.POLICY_TEXT)) {
                 return true;
             }
-            
+
             return false;
         }
     }

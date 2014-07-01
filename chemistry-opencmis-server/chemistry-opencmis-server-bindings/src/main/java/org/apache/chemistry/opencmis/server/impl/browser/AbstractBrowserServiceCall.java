@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.server.impl.browser;
 
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.*;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -27,6 +29,7 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -212,6 +215,8 @@ public abstract class AbstractBrowserServiceCall extends AbstractServiceCall {
             Cookie transactionCookie = new Cookie(getCookieName(token), cookieValue);
             transactionCookie.setMaxAge(expiry);
             transactionCookie.setPath(request.getContextPath() + request.getServletPath() + "/" + repositoryId);
+            transactionCookie.setSecure(request.isSecure());
+
             response.addCookie(transactionCookie);
         }
     }
@@ -235,7 +240,7 @@ public abstract class AbstractBrowserServiceCall extends AbstractServiceCall {
 
         // load primary type
         List<String> objectTypeIdsValues = properties.get(PropertyIds.OBJECT_TYPE_ID);
-        if (objectTypeIdsValues != null && !objectTypeIdsValues.isEmpty()) {
+        if (isNotEmpty(objectTypeIdsValues)) {
             TypeDefinition typeDef = typeCache.getTypeDefinition(objectTypeIdsValues.get(0));
             if (typeDef == null) {
                 throw new CmisInvalidArgumentException("Invalid type: " + objectTypeIdsValues.get(0));
@@ -244,7 +249,7 @@ public abstract class AbstractBrowserServiceCall extends AbstractServiceCall {
 
         // load secondary types
         List<String> secondaryObjectTypeIdsValues = properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS);
-        if (secondaryObjectTypeIdsValues != null && !secondaryObjectTypeIdsValues.isEmpty()) {
+        if (isNotEmpty(secondaryObjectTypeIdsValues)) {
             for (String secTypeId : secondaryObjectTypeIdsValues) {
                 TypeDefinition typeDef = typeCache.getTypeDefinition(secTypeId);
                 if (typeDef == null) {
@@ -284,7 +289,7 @@ public abstract class AbstractBrowserServiceCall extends AbstractServiceCall {
 
         // load secondary types
         List<String> secondaryObjectTypeIdsValues = properties.get(PropertyIds.SECONDARY_OBJECT_TYPE_IDS);
-        if (secondaryObjectTypeIdsValues != null && !secondaryObjectTypeIdsValues.isEmpty()) {
+        if (isNotEmpty(secondaryObjectTypeIdsValues)) {
             for (String secTypeId : secondaryObjectTypeIdsValues) {
                 TypeDefinition typeDef = typeCache.getTypeDefinition(secTypeId);
                 if (typeDef == null) {
@@ -381,7 +386,7 @@ public abstract class AbstractBrowserServiceCall extends AbstractServiceCall {
                 GregorianCalendar cal;
                 try {
                     long timestamp = Long.parseLong(s);
-                    cal = new GregorianCalendar();
+                    cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
                     cal.setTimeInMillis(timestamp);
                 } catch (NumberFormatException e) {
                     cal = DateTimeHelper.parseXmlDateTime(s);
