@@ -170,7 +170,7 @@ public class DefaultHttpInvoker implements HttpInvoker {
             // compression
             Object compression = session.get(SessionParameter.COMPRESSION);
             if ((compression != null) && Boolean.parseBoolean(compression.toString())) {
-                conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+                conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
             }
 
             // locale
