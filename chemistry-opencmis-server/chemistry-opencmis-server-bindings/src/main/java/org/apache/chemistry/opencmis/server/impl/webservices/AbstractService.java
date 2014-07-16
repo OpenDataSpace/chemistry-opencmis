@@ -49,6 +49,8 @@ import org.apache.chemistry.opencmis.commons.impl.jaxb.EnumServiceException;
 import org.apache.chemistry.opencmis.commons.server.CallContext;
 import org.apache.chemistry.opencmis.commons.server.CmisService;
 import org.apache.chemistry.opencmis.commons.server.CmisServiceFactory;
+import org.apache.chemistry.opencmis.commons.server.ProgressControlCmisService;
+import org.apache.chemistry.opencmis.commons.server.ProgressControlCmisService.Progress;
 import org.apache.chemistry.opencmis.server.impl.CallContextImpl;
 import org.apache.chemistry.opencmis.server.impl.CmisRepositoryContextListener;
 import org.apache.chemistry.opencmis.server.impl.ServerVersion;
@@ -97,6 +99,9 @@ public abstract class AbstractService {
                 MessageContext.SERVLET_RESPONSE);
 
         CmisVersion cmisVersion = (CmisVersion) request.getAttribute(CmisWebServicesServlet.CMIS_VERSION);
+        if (cmisVersion == null) {
+            throw new CmisRuntimeException("Server configuration issue. CMIS version not set!");
+        }
 
         CallContextImpl context = new CallContextImpl(CallContext.BINDING_WEBSERVICES, cmisVersion, repositoryId,
                 servletContext, request, response, factory, null);
@@ -140,6 +145,36 @@ public abstract class AbstractService {
         CmisServiceFactory factory = getServiceFactory(wsContext);
         CallContext context = createContext(wsContext, factory, repositoryId);
         return factory.getService(context);
+    }
+
+    /**
+     * Determines if the processing should be stopped before the service method
+     * is called.
+     * 
+     * @return {@code true} if the processing should be stopped, {@code false}
+     *         otherwise
+     */
+    protected boolean stopBeforeService(CmisService service) {
+        if (!(service instanceof ProgressControlCmisService)) {
+            return false;
+        }
+
+        return ((ProgressControlCmisService) service).beforeServiceCall() == Progress.STOP;
+    }
+
+    /**
+     * Determines if the processing should be stopped after the service method
+     * is called.
+     * 
+     * @return {@code true} if the processing should be stopped, {@code false}
+     *         otherwise
+     */
+    protected boolean stopAfterService(CmisService service) {
+        if (!(service instanceof ProgressControlCmisService)) {
+            return false;
+        }
+
+        return ((ProgressControlCmisService) service).beforeServiceCall() == Progress.STOP;
     }
 
     /**
