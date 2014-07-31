@@ -2306,7 +2306,15 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
                 // cmis:creationDate
                 cpd = new CmisPropertyDefintion(PropertyIds.CREATION_DATE, false, PropertyType.DATETIME,
                         Cardinality.SINGLE, Updatability.READONLY, true, true);
-                addResult(results, cpd.check(type));
+                final CmisTestResult result = cpd.check(type);
+
+                if (result != null && result.getStatus() == FAILURE) {
+                    cpd = new CmisPropertyDefintion(PropertyIds.CREATION_DATE, Boolean.FALSE, PropertyType.DATETIME,
+                            Cardinality.SINGLE, Updatability.ONCREATE, Boolean.TRUE, Boolean.TRUE);
+                    addResult(results, cpd.check(type));
+                } else {
+                    addResult(results, result);
+                }
 
                 // cmis:lastModifiedBy
                 cpd = new CmisPropertyDefintion(PropertyIds.LAST_MODIFIED_BY, false, PropertyType.STRING,
