@@ -27,8 +27,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -62,6 +64,7 @@ public class ClientSession {
     public static final String FOLDER_PREFIX = WORKBENCH_PREFIX + "folder.";
     public static final String VERSION_PREFIX = WORKBENCH_PREFIX + "version.";
     public static final String ACCEPT_SELF_SIGNED_CERTIFICATES = WORKBENCH_PREFIX + "acceptSelfSignedCertificates";
+    public static final String MAX_FOLDER_CHILDREN = FOLDER_PREFIX + "maxChildren";
 
     public enum Authentication {
         NONE, STANDARD, NTLM, OAUTH_BEARER
@@ -103,6 +106,7 @@ public class ClientSession {
     private OperationContext objectOperationContext;
     private OperationContext folderOperationContext;
     private OperationContext versionOperationContext;
+    private int maxChildren;
 
     public ClientSession(Map<String, String> sessionParameters, ObjectFactory objectFactory,
             AuthenticationProvider authenticationProvider, Cache cache, TypeDefinitionCache typeDefCache) {
@@ -175,6 +179,16 @@ public class ClientSession {
             acceptSelfSignedCertificates();
         }
 
+        maxChildren = -1;
+        String maxChildrenStr = sessionParameters.get(MAX_FOLDER_CHILDREN);
+        if (maxChildrenStr != null) {
+            try {
+                maxChildren = Integer.valueOf(maxChildrenStr.trim());
+            } catch (NumberFormatException e) {
+                LOG.warn("Invalid " + MAX_FOLDER_CHILDREN + " parameter!", e);
+            }
+        }
+
         repositories = SessionFactoryImpl.newInstance().getRepositories(sessionParameters, objectFactory,
                 authenticationProvider, cache, typeDefCache);
     }
@@ -197,6 +211,10 @@ public class ClientSession {
 
     public Map<String, String> getSessionParameters() {
         return Collections.unmodifiableMap(sessionParameters);
+    }
+
+    public int getMaxChildren() {
+        return maxChildren;
     }
 
     public synchronized OperationContext getObjectOperationContext() {
@@ -309,7 +327,7 @@ public class ClientSession {
     private void acceptSelfSignedCertificates() {
         TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
             public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[0];
             }
 
             public void checkClientTrusted(X509Certificate[] certs, String authType) {
@@ -319,10 +337,18 @@ public class ClientSession {
             }
         } };
 
+        HostnameVerifier accepctAllHostnames = new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        };
+
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier(accepctAllHostnames);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

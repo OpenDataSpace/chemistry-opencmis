@@ -30,6 +30,7 @@ import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubS
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_FOLDERTREE;
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_OBJECTBYID;
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_OBJECTBYPATH;
+import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_PARENT;
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_PARENTS;
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_POLICIES;
 import static org.apache.chemistry.opencmis.server.impl.atompub.AbstractAtomPubServiceCall.RESOURCE_QUERY;
@@ -128,6 +129,7 @@ public class CmisAtomPubServlet extends AbstractCmisHttpServlet {
         addResource(RESOURCE_CHILDREN, METHOD_GET, new NavigationService.GetChildren());
         addResource(RESOURCE_DESCENDANTS, METHOD_GET, new NavigationService.GetDescendants());
         addResource(RESOURCE_FOLDERTREE, METHOD_GET, new NavigationService.GetFolderTree());
+        addResource(RESOURCE_PARENT, METHOD_GET, new NavigationService.GetFolderParent());
         addResource(RESOURCE_PARENTS, METHOD_GET, new NavigationService.GetObjectParents());
         addResource(RESOURCE_CHECKEDOUT, METHOD_GET, new NavigationService.GetCheckedOutDocs());
         addResource(RESOURCE_ENTRY, METHOD_GET, new ObjectService.GetObject());
@@ -288,6 +290,10 @@ public class CmisAtomPubServlet extends AbstractCmisHttpServlet {
 
         if (ex instanceof CmisRuntimeException) {
             LOG.error(ex.getMessage(), ex);
+        } else if (ex instanceof CmisStorageException) {
+            LOG.error(ex.getMessage(), ex);
+            statusCode = getErrorCode((CmisStorageException) ex);
+            exceptionName = ((CmisStorageException) ex).getExceptionName();
         } else if (ex instanceof CmisBaseException) {
             statusCode = getErrorCode((CmisBaseException) ex);
             exceptionName = ((CmisBaseException) ex).getExceptionName();
