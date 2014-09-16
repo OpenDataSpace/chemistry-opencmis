@@ -70,6 +70,8 @@ import org.apache.chemistry.opencmis.commons.data.AllowableActions;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
 import org.apache.chemistry.opencmis.commons.data.NewTypeSettableAttributes;
 import org.apache.chemistry.opencmis.commons.data.ObjectData;
+import org.apache.chemistry.opencmis.commons.data.ObjectInFolderData;
+import org.apache.chemistry.opencmis.commons.data.ObjectInFolderList;
 import org.apache.chemistry.opencmis.commons.data.RepositoryCapabilities;
 import org.apache.chemistry.opencmis.commons.data.RepositoryInfo;
 import org.apache.chemistry.opencmis.commons.definitions.DocumentTypeDefinition;
@@ -1149,7 +1151,7 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
 
             // check ACL
             if (object.getAcl() != null && object.getAcl().getAces() != null) {
-                addResult(results, checkACL(session, object.getAcl(), "ACL"));
+                addResult(results, checkACL(session, object.getAcl(), true, "ACL"));
             }
 
             // check policies
@@ -1227,7 +1229,7 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
         return (result.getStatus().getLevel() <= OK.getLevel() ? null : result);
     }
 
-    protected CmisTestResult checkACL(Session session, Acl acl, String message) {
+    protected CmisTestResult checkACL(Session session, Acl acl, boolean checkExact, String message) {
         List<CmisTestResult> results = new ArrayList<CmisTestResult>();
 
         CmisTestResult f;
@@ -1242,7 +1244,7 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
 
             if (acl.getAces() != null) {
                 for (Ace ace : acl.getAces()) {
-                    f = createResult(FAILURE, "ACE with empty principal id!");
+                    f = createResult(FAILURE, "ACE with empty principal ID!");
                     addResult(results, assertStringNotEmpty(ace.getPrincipalId(), null, f));
 
                     f = createResult(FAILURE, "ACE with empty permission list!");
@@ -1255,6 +1257,11 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
                         }
                     }
                 }
+            }
+
+            if (checkExact) {
+                f = createResult(FAILURE, "ACL is provided but the isExact flag is not set!");
+                addResult(results, assertNotNull(acl.isExact(), null, f));
             }
         }
 
@@ -1885,6 +1892,33 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
             addResult(results, assertEquals(0, orderByNameIssues, null, f));
         } else {
             addResult(results, createResult(INFO, "Repository doesn't support Order By for getChildren()."));
+        }
+
+        // test path segments
+
+        ObjectInFolderList pathSegementChildren = session
+                .getBinding()
+                .getNavigationService()
+                .getChildren(session.getRepositoryInfo().getId(), folder.getId(), "cmis:objectId,cmis:name", null,
+                        null, null, null, Boolean.TRUE, BigInteger.valueOf(10), BigInteger.ZERO, null);
+
+        if (pathSegementChildren != null && pathSegementChildren.getObjects() != null) {
+            for (ObjectInFolderData objectInFolder : pathSegementChildren.getObjects()) {
+                String pathSegement = objectInFolder.getPathSegment();
+                String objectId = (String) objectInFolder.getObject().getProperties().getProperties()
+                        .get(PropertyIds.OBJECT_ID).getFirstValue();
+
+                if (pathSegement == null) {
+                    addResult(results, createResult(FAILURE, "getChildren omitted path segement! Id: " + objectId));
+                } else {
+                    CmisObject pathSegementChild = session.getObjectByPath(folder.getPath(), pathSegement);
+
+                    f = createResult(FAILURE,
+                            "Combining the path of the parent folder and the path segement of a child returns a different object! Id: "
+                                    + objectId);
+                    addResult(results, assertEquals(objectId, pathSegementChild.getId(), null, f));
+                }
+            }
         }
 
         // getDescendants

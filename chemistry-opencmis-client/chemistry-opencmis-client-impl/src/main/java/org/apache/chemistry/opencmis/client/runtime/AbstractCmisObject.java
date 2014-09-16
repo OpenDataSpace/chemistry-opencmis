@@ -157,6 +157,33 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
             if (objectData.getAcl() != null) {
                 acl = objectData.getAcl();
                 extensions.put(ExtensionLevel.ACL, objectData.getAcl().getExtensions());
+
+                if (objectData.isExactAcl() != null) {
+                    final Acl objectAcl = objectData.getAcl();
+                    final Boolean isExact = objectData.isExactAcl();
+                    acl = new Acl() {
+
+                        @Override
+                        public void setExtensions(List<CmisExtensionElement> extensions) {
+                            objectAcl.setExtensions(extensions);
+                        }
+
+                        @Override
+                        public List<CmisExtensionElement> getExtensions() {
+                            return objectAcl.getExtensions();
+                        }
+
+                        @Override
+                        public Boolean isExact() {
+                            return isExact;
+                        }
+
+                        @Override
+                        public List<Ace> getAces() {
+                            return objectAcl.getAces();
+                        }
+                    };
+                }
             }
 
             // handle policies
@@ -596,7 +623,7 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
         }
     }
 
-    public Set<String> getPermissonsForPrincipal(String principalId) {
+    public Set<String> getPermissionsForPrincipal(String principalId) {
         if (principalId == null) {
             throw new IllegalArgumentException("Principal must be set!");
         }
@@ -620,6 +647,10 @@ public abstract class AbstractCmisObject implements CmisObject, Serializable {
         }
 
         return result;
+    }
+
+    public Set<String> getPermissonsForPrincipal(String principalId) {
+        return getPermissionsForPrincipal(principalId);
     }
 
     // --- policies ---
