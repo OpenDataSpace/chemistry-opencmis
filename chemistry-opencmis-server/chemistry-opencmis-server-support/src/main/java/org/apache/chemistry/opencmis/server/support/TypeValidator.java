@@ -113,9 +113,12 @@ public final class TypeValidator {
                 }
             }
 
-            // check if value is in list
-            if (hasMultiValueChoiceLists) {
-                // do a complex check if this combination of actual values is
+            if (propDef.isOpenChoice() != null && propDef.isOpenChoice()) {
+            	isAllowedValue = true;
+            } else if (hasMultiValueChoiceLists) {
+                // check if value is in list
+
+            	// do a complex check if this combination of actual values is
                 // allowed check if value is in list
                 isAllowedValue = false;
                 List<?> actualValues = prop.getValues();
@@ -240,7 +243,7 @@ public final class TypeValidator {
             // check max length
             if (maxLen >= 0 && len >= 0 && maxLen < len) {
                 throw new CmisConstraintException("For property with id " + propDef.getId() + " the length of " + len
-                        + "is bigger than the maximum allowed length  " + maxLen);
+                        + " is bigger than the maximum allowed length  " + maxLen);
             }
         }
     }
