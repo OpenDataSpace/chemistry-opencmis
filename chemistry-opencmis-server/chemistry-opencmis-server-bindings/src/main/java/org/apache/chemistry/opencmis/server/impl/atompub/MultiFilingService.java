@@ -30,7 +30,7 @@ import org.apache.chemistry.opencmis.commons.impl.UrlBuilder;
 import org.apache.chemistry.opencmis.commons.server.CallContext;
 import org.apache.chemistry.opencmis.commons.server.CmisService;
 import org.apache.chemistry.opencmis.commons.server.ObjectInfo;
-import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStreamFactory;
+import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
 
 /**
  * MultiFiling Service operations.
@@ -52,29 +52,31 @@ public class MultiFilingService {
             // get parameters
             String removeFrom = getStringParameter(request, Constants.PARAM_REMOVE_FROM);
 
-            ThresholdOutputStreamFactory streamFactory = (ThresholdOutputStreamFactory) context
+            TempStoreOutputStreamFactory streamFactory = (TempStoreOutputStreamFactory) context
                     .get(CallContext.STREAM_FACTORY);
             AtomEntryParser parser = new AtomEntryParser(streamFactory);
             parser.setIgnoreAtomContentSrc(true); // needed for some clients
             parser.parse(request.getInputStream());
 
-            String objectId = parser.getId();
-
-            if (stopBeforeService(service)) {
-                return;
-            }
-
-            if (objectId == null && removeFrom == null) {
-                // create unfiled object
-                createUnfiledObject(context, service, repositoryId, request, response, parser);
-                return;
-            }
-
             // execute
-            service.removeObjectFromFolder(repositoryId, objectId, removeFrom, null);
+            String objectId = parser.getId();
+            try {
+                if (stopBeforeService(service)) {
+                    return;
+                }
 
-            if (stopAfterService(service)) {
-                return;
+                if (objectId == null && removeFrom == null) {
+                    createUnfiledObject(context, service, repositoryId, request, response, parser);
+                    return;
+                }
+
+                service.removeObjectFromFolder(repositoryId, objectId, removeFrom, null);
+
+                if (stopAfterService(service)) {
+                    return;
+                }
+            } finally {
+                parser.release();
             }
 
             ObjectInfo objectInfo = service.getObjectInfo(repositoryId, objectId);
@@ -117,13 +119,8 @@ public class MultiFilingService {
 
             // create
             ContentStream contentStream = parser.getContentStream();
-            String newObjectId = null;
-            try {
-                newObjectId = service.create(repositoryId, parser.getProperties(), null, contentStream,
-                        versioningState, parser.getPolicyIds(), null);
-            } finally {
-                closeContentStream(contentStream);
-            }
+            String newObjectId = service.create(repositoryId, parser.getProperties(), null, contentStream,
+                    versioningState, parser.getPolicyIds(), null);
 
             if (stopAfterService(service)) {
                 return;

@@ -75,6 +75,7 @@ import static org.apache.chemistry.opencmis.server.shared.Dispatcher.METHOD_HEAD
 import static org.apache.chemistry.opencmis.server.shared.Dispatcher.METHOD_POST;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -113,6 +114,7 @@ import org.apache.chemistry.opencmis.server.shared.HttpUtils;
 import org.apache.chemistry.opencmis.server.shared.NoBodyHttpServletResponseWrapper;
 import org.apache.chemistry.opencmis.server.shared.QueryStringHttpServletRequestWrapper;
 import org.apache.chemistry.opencmis.server.shared.ServiceCall;
+import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,12 +219,20 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
             response.addHeader("Cache-Control", "private, max-age=0");
             response.addHeader("Server", ServerVersion.OPENCMIS_SERVER);
 
+            // split path
+            String[] pathFragments = HttpUtils.splitPath(request);
+
+            // create stream factory
+            TempStoreOutputStreamFactory streamFactoy = TempStoreOutputStreamFactory.newInstance(getServiceFactory(),
+                    pathFragments.length > 0 ? pathFragments[0] : null);
+
+            // check HTTP method
             String method = request.getMethod();
 
             if (METHOD_GET.equals(method)) {
                 request = new QueryStringHttpServletRequestWrapper(request);
             } else if (METHOD_POST.equals(method)) {
-                request = new POSTHttpServletRequestWrapper(request, getThresholdOutputStreamFactory());
+                request = new POSTHttpServletRequestWrapper(request, streamFactoy);
             } else if (METHOD_HEAD.equals(method)) {
                 request = new HEADHttpServletRequestWrapper(request);
                 response = new NoBodyHttpServletResponseWrapper(response);
@@ -236,8 +246,8 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                 return;
             }
 
-            context = createContext(getServletContext(), request, response);
-            dispatch(context, request, response);
+            context = createContext(getServletContext(), request, response, streamFactoy);
+            dispatch(context, request, response, pathFragments);
         } catch (Exception e) {
             if (e instanceof CmisUnauthorizedException) {
                 response.setHeader("WWW-Authenticate", "Basic realm=\"CMIS\"");
@@ -253,6 +263,18 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                 printError(context, e, request, response);
             }
         } finally {
+            // in any case close the content stream if one has been provided
+            if (request instanceof POSTHttpServletRequestWrapper) {
+                InputStream stream = ((POSTHttpServletRequestWrapper) request).getStream();
+                if (stream != null) {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                        LOG.error("Could not close POST stream: {}", e.toString(), e);
+                    }
+                }
+            }
+
             // we are done.
             response.flushBuffer();
         }
@@ -274,8 +296,8 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
         rootDispatcher.addResource(resource, httpMethod, serviceCall);
     }
 
-    private void dispatch(CallContext context, HttpServletRequest request, HttpServletResponse response)
-            throws Exception {
+    private void dispatch(CallContext context, HttpServletRequest request, HttpServletResponse response,
+            String[] pathFragments) throws Exception {
         BrowserCallContextImpl browserContext = (BrowserCallContextImpl) context;
         CmisService service = null;
         try {
@@ -283,8 +305,6 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
             service = getServiceFactory().getService(context);
 
             // analyze the path
-            String[] pathFragments = HttpUtils.splitPath(request);
-
             if (pathFragments.length < 1) {
                 // root -> repository infos
                 repositoryDispatcher.dispatch("", METHOD_GET, context, service, null, request, response);

@@ -64,7 +64,7 @@ import org.apache.chemistry.opencmis.commons.server.CallContext;
 import org.apache.chemistry.opencmis.commons.server.CmisService;
 import org.apache.chemistry.opencmis.commons.server.ObjectInfo;
 import org.apache.chemistry.opencmis.commons.spi.Holder;
-import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStreamFactory;
+import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
 
 /**
  * Object Service operations.
@@ -91,53 +91,43 @@ public class ObjectService {
             VersioningState versioningState = getEnumParameter(request, Constants.PARAM_VERSIONIG_STATE,
                     VersioningState.class);
 
-            ThresholdOutputStreamFactory streamFactory = (ThresholdOutputStreamFactory) context
+            TempStoreOutputStreamFactory streamFactory = (TempStoreOutputStreamFactory) context
                     .get(CallContext.STREAM_FACTORY);
             AtomEntryParser parser = new AtomEntryParser(streamFactory);
             parser.setIgnoreAtomContentSrc(true); // needed for some clients
             parser.parse(request.getInputStream());
 
-            String objectId = parser.getId();
-
             // execute
             String newObjectId = null;
-
-            if (objectId == null) {
+            String objectId = parser.getId();
+            try {
                 if (stopBeforeService(service)) {
                     return;
                 }
 
-                // create
-                ContentStream contentStream = parser.getContentStream();
-                try {
+                if (objectId == null) {
+                    // create
+                    ContentStream contentStream = parser.getContentStream();
                     newObjectId = service.create(repositoryId, parser.getProperties(), folderId, contentStream,
                             versioningState, parser.getPolicyIds(), null);
-                } finally {
-                    closeContentStream(contentStream);
-                }
-
-                if (stopAfterService(service)) {
-                    return;
-                }
-            } else {
-                if (stopBeforeService(service)) {
-                    return;
-                }
-
-                if (sourceFolderId == null || sourceFolderId.trim().length() == 0) {
-                    // addObjectToFolder
-                    service.addObjectToFolder(repositoryId, objectId, folderId, null, null);
-                    newObjectId = objectId;
                 } else {
-                    // move
-                    Holder<String> objectIdHolder = new Holder<String>(objectId);
-                    service.moveObject(repositoryId, objectIdHolder, folderId, sourceFolderId, null);
-                    newObjectId = objectIdHolder.getValue();
+                    if (sourceFolderId == null || sourceFolderId.trim().length() == 0) {
+                        // addObjectToFolder
+                        service.addObjectToFolder(repositoryId, objectId, folderId, null, null);
+                        newObjectId = objectId;
+                    } else {
+                        // move
+                        Holder<String> objectIdHolder = new Holder<String>(objectId);
+                        service.moveObject(repositoryId, objectIdHolder, folderId, sourceFolderId, null);
+                        newObjectId = objectIdHolder.getValue();
+                    }
                 }
 
                 if (stopAfterService(service)) {
                     return;
                 }
+            } finally {
+                parser.release();
             }
 
             ObjectInfo objectInfo = service.getObjectInfo(repositoryId, newObjectId);
@@ -179,20 +169,25 @@ public class ObjectService {
             assert response != null;
 
             // get parameters
-            ThresholdOutputStreamFactory streamFactory = (ThresholdOutputStreamFactory) context
+            TempStoreOutputStreamFactory streamFactory = (TempStoreOutputStreamFactory) context
                     .get(CallContext.STREAM_FACTORY);
             AtomEntryParser parser = new AtomEntryParser(request.getInputStream(), streamFactory);
 
             // execute
-            if (stopBeforeService(service)) {
-                return;
-            }
+            String newObjectId = null;
+            try {
+                if (stopBeforeService(service)) {
+                    return;
+                }
 
-            String newObjectId = service.createRelationship(repositoryId, parser.getProperties(),
-                    parser.getPolicyIds(), null, null, null);
+                newObjectId = service.createRelationship(repositoryId, parser.getProperties(), parser.getPolicyIds(),
+                        null, null, null);
 
-            if (stopAfterService(service)) {
-                return;
+                if (stopAfterService(service)) {
+                    return;
+                }
+            } finally {
+                parser.release();
             }
 
             ObjectInfo objectInfo = service.getObjectInfo(repositoryId, newObjectId);
@@ -687,57 +682,58 @@ public class ObjectService {
             String checkinComment = getStringParameter(request, Constants.PARAM_CHECKIN_COMMENT);
             Boolean major = getBooleanParameter(request, Constants.PARAM_MAJOR);
 
-            ThresholdOutputStreamFactory streamFactory = (ThresholdOutputStreamFactory) context
+            TempStoreOutputStreamFactory streamFactory = (TempStoreOutputStreamFactory) context
                     .get(CallContext.STREAM_FACTORY);
             AtomEntryParser parser = new AtomEntryParser(request.getInputStream(), streamFactory);
 
             // execute
             Holder<String> objectIdHolder = new Holder<String>(objectId);
 
-            if ((checkin != null) && (checkin.booleanValue())) {
-                if (stopBeforeService(service)) {
-                    return;
-                }
+            try {
+                if ((checkin != null) && (checkin.booleanValue())) {
+                    if (stopBeforeService(service)) {
+                        return;
+                    }
 
-                ContentStream contentStream = parser.getContentStream();
-                try {
+                    ContentStream contentStream = parser.getContentStream();
                     service.checkIn(repositoryId, objectIdHolder, major, parser.getProperties(), contentStream,
                             checkinComment, parser.getPolicyIds(), null, null, null);
-                } finally {
-                    closeContentStream(contentStream);
-                }
 
-                if (stopAfterService(service)) {
-                    return;
-                }
-            } else {
-                Properties properties = parser.getProperties();
-                String changeToken = null;
-                if (properties != null) {
-                    changeToken = extractChangeToken(properties);
-                    if (changeToken != null) {
-                        properties = new PropertiesImpl(properties);
-                        ((PropertiesImpl) properties).removeProperty(PropertyIds.CHANGE_TOKEN);
+                    if (stopAfterService(service)) {
+                        return;
+                    }
+                } else {
+                    Properties properties = parser.getProperties();
+                    String changeToken = null;
+                    if (properties != null) {
+                        changeToken = extractChangeToken(properties);
+                        if (changeToken != null) {
+                            properties = new PropertiesImpl(properties);
+                            ((PropertiesImpl) properties).removeProperty(PropertyIds.CHANGE_TOKEN);
+                        }
+                    }
+
+                    if (changeToken == null) {
+                        // not required by the CMIS specification
+                        // -> keep for backwards compatibility with older
+                        // OpenCMIS
+                        // clients
+                        changeToken = getStringParameter(request, Constants.PARAM_CHANGE_TOKEN);
+                    }
+
+                    if (stopBeforeService(service)) {
+                        return;
+                    }
+
+                    service.updateProperties(repositoryId, objectIdHolder, changeToken == null ? null
+                            : new Holder<String>(changeToken), properties, null);
+
+                    if (stopAfterService(service)) {
+                        return;
                     }
                 }
-
-                if (changeToken == null) {
-                    // not required by the CMIS specification
-                    // -> keep for backwards compatibility with older OpenCMIS
-                    // clients
-                    changeToken = getStringParameter(request, Constants.PARAM_CHANGE_TOKEN);
-                }
-
-                if (stopBeforeService(service)) {
-                    return;
-                }
-
-                service.updateProperties(repositoryId, objectIdHolder, changeToken == null ? null : new Holder<String>(
-                        changeToken), properties, null);
-
-                if (stopAfterService(service)) {
-                    return;
-                }
+            } finally {
+                parser.release();
             }
 
             ObjectInfo objectInfo = service.getObjectInfo(repositoryId, objectIdHolder.getValue());
@@ -801,19 +797,33 @@ public class ObjectService {
             assert request != null;
             assert response != null;
 
-            ThresholdOutputStreamFactory streamFactory = (ThresholdOutputStreamFactory) context
+            TempStoreOutputStreamFactory streamFactory = (TempStoreOutputStreamFactory) context
                     .get(CallContext.STREAM_FACTORY);
             AtomEntryParser parser = new AtomEntryParser(streamFactory);
             parser.parse(request.getInputStream());
 
-            BulkUpdateImpl bulkUpdate = parser.getBulkUpdate();
-            if (bulkUpdate == null) {
-                throw new CmisInvalidArgumentException("Bulk update data is missing!");
-            }
+            // execute
+            List<BulkUpdateObjectIdAndChangeToken> result = null;
+            try {
+                BulkUpdateImpl bulkUpdate = parser.getBulkUpdate();
+                if (bulkUpdate == null) {
+                    throw new CmisInvalidArgumentException("Bulk update data is missing!");
+                }
 
-            List<BulkUpdateObjectIdAndChangeToken> result = service.bulkUpdateProperties(repositoryId,
-                    bulkUpdate.getObjectIdAndChangeToken(), bulkUpdate.getProperties(),
-                    bulkUpdate.getAddSecondaryTypeIds(), bulkUpdate.getRemoveSecondaryTypeIds(), null);
+                if (stopBeforeService(service)) {
+                    return;
+                }
+
+                result = service.bulkUpdateProperties(repositoryId, bulkUpdate.getObjectIdAndChangeToken(),
+                        bulkUpdate.getProperties(), bulkUpdate.getAddSecondaryTypeIds(),
+                        bulkUpdate.getRemoveSecondaryTypeIds(), null);
+
+                if (stopAfterService(service)) {
+                    return;
+                }
+            } finally {
+                parser.release();
+            }
 
             response.setStatus(HttpServletResponse.SC_CREATED);
             response.setContentType(Constants.MEDIATYPE_FEED);

@@ -21,15 +21,17 @@ package org.apache.chemistry.opencmis.server.impl;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 
+import org.apache.chemistry.opencmis.commons.server.TempStoreOutputStream;
+import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
 import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStream;
 import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStream.ThresholdInputStream;
-import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStreamFactory;
 import org.junit.Test;
 
 public class ThresholdOutputStreamTest {
@@ -38,10 +40,13 @@ public class ThresholdOutputStreamTest {
 
     @Test
     public void testInMemory() throws Exception {
-        ThresholdOutputStreamFactory streamFactory = ThresholdOutputStreamFactory.newInstance(null, 1024, 1024, false);
+        TempStoreOutputStreamFactory streamFactory = TempStoreOutputStreamFactory.newInstance(null, 1024, 1024, false);
+
+        TempStoreOutputStream tempStream = streamFactory.newOutputStream();
+        assertTrue(tempStream instanceof ThresholdOutputStream);
 
         // set content
-        ThresholdOutputStream tos = streamFactory.newOutputStream();
+        ThresholdOutputStream tos = (ThresholdOutputStream) tempStream;
         tos.write(CONTENT);
         tos.close();
 
@@ -51,8 +56,8 @@ public class ThresholdOutputStreamTest {
         assertTrue(tis.isInMemory());
         assertNull(tis.getTemporaryFile());
         assertTrue(tis.markSupported());
-        assertEquals(CONTENT.length, tis.length());
-        assertArrayEquals(CONTENT, getBytesFromArray(tis.getBytes(), (int) tis.length()));
+        assertEquals(CONTENT.length, tis.getLength());
+        assertArrayEquals(CONTENT, getBytesFromArray(tis.getBytes(), (int) tis.getLength()));
 
         // read stream
         byte[] buffer = new byte[CONTENT.length];
@@ -91,10 +96,13 @@ public class ThresholdOutputStreamTest {
 
     @Test
     public void testTempFile() throws Exception {
-        ThresholdOutputStreamFactory streamFactory = ThresholdOutputStreamFactory.newInstance(null, 0, 1024, false);
+        TempStoreOutputStreamFactory streamFactory = TempStoreOutputStreamFactory.newInstance(null, 0, 1024, false);
+
+        TempStoreOutputStream tempStream = streamFactory.newOutputStream();
+        assertTrue(tempStream instanceof ThresholdOutputStream);
 
         // set content
-        ThresholdOutputStream tos = streamFactory.newOutputStream();
+        ThresholdOutputStream tos = (ThresholdOutputStream) tempStream;
         tos.write(CONTENT);
         tos.close();
 
@@ -104,7 +112,7 @@ public class ThresholdOutputStreamTest {
         assertFalse(tis.isInMemory());
         assertTrue(tis.markSupported());
         assertNull(tis.getBytes());
-        assertEquals(CONTENT.length, tis.length());
+        assertEquals(CONTENT.length, tis.getLength());
 
         assertTrue(tis.getTemporaryFile().exists());
         assertEquals(CONTENT.length, tis.getTemporaryFile().length());
@@ -153,11 +161,14 @@ public class ThresholdOutputStreamTest {
     public void testThreshold() throws Exception {
         int threshold = 8;
 
-        ThresholdOutputStreamFactory streamFactory = ThresholdOutputStreamFactory.newInstance(null, threshold, 1024,
+        TempStoreOutputStreamFactory streamFactory = TempStoreOutputStreamFactory.newInstance(null, threshold, 1024,
                 false);
 
         for (int i = 0; i < 20; i++) {
-            ThresholdOutputStream tos = streamFactory.newOutputStream();
+            TempStoreOutputStream tempStream = streamFactory.newOutputStream();
+            assertTrue(tempStream instanceof ThresholdOutputStream);
+
+            ThresholdOutputStream tos = (ThresholdOutputStream) tempStream;
             for (int j = 0; j < i; j++) {
                 tos.write('0' + j);
             }
@@ -170,7 +181,17 @@ public class ThresholdOutputStreamTest {
                 assertTrue(tis.isInMemory());
             }
 
-            tos.close();
+            File tempFile = tis.getTemporaryFile();
+
+            tis.close();
+
+            assertEquals(-1, tis.read());
+            if (tis.isInMemory()) {
+                assertNull(tempFile);
+            } else {
+                assertNotNull(tempFile);
+                assertFalse(tempFile.exists());
+            }
         }
     }
 

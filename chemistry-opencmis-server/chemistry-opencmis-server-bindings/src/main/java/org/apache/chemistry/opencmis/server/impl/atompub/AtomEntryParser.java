@@ -55,9 +55,9 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.BulkUpdateImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.ContentStreamImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertiesImpl;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PropertyStringImpl;
+import org.apache.chemistry.opencmis.commons.server.TempStoreOutputStream;
 import org.apache.chemistry.opencmis.server.shared.CappedInputStream;
-import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStream;
-import org.apache.chemistry.opencmis.server.shared.ThresholdOutputStreamFactory;
+import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
 
 /**
  * Parser for Atom Entries.
@@ -83,7 +83,7 @@ public final class AtomEntryParser {
 
     private CappedInputStream cappedStream;
 
-    private final ThresholdOutputStreamFactory streamFactory;
+    private final TempStoreOutputStreamFactory streamFactory;
 
     private ObjectData object;
     private ContentStreamImpl atomContentStream;
@@ -94,14 +94,14 @@ public final class AtomEntryParser {
     /**
      * Constructor.
      */
-    public AtomEntryParser(ThresholdOutputStreamFactory streamFactory) {
+    public AtomEntryParser(TempStoreOutputStreamFactory streamFactory) {
         this.streamFactory = streamFactory;
     }
 
     /**
      * Constructor that immediately parses the given stream.
      */
-    public AtomEntryParser(InputStream stream, ThresholdOutputStreamFactory streamFactory) throws XMLStreamException,
+    public AtomEntryParser(InputStream stream, TempStoreOutputStreamFactory streamFactory) throws XMLStreamException,
             IOException {
         this(streamFactory);
         parse(stream);
@@ -194,9 +194,7 @@ public final class AtomEntryParser {
      * Parses the stream.
      */
     public void parse(InputStream stream) throws XMLStreamException, IOException {
-        object = null;
-        atomContentStream = null;
-        cmisContentStream = null;
+        release();
 
         if (stream == null) {
             return;
@@ -224,9 +222,45 @@ public final class AtomEntryParser {
                     break;
                 }
             }
+        } catch (XMLStreamException xse) {
+            release();
+            throw xse;
+        } catch (IOException ioe) {
+            release();
+            throw ioe;
+        } catch (RuntimeException re) {
+            release();
+            throw re;
         } finally {
             parser.close();
         }
+    }
+
+    /**
+     * Releases all resources.
+     */
+    public void release() {
+        object = null;
+        typeDef = null;
+        bulkUpdate = null;
+        closeAtomContentStream();
+        closeCmisContentStream();
+    }
+
+    /**
+     * Closes the Atom content stream.
+     */
+    private void closeAtomContentStream() {
+        IOUtils.closeQuietly(atomContentStream);
+        atomContentStream = null;
+    }
+
+    /**
+     * Closes the CMIS content stream.
+     */
+    private void closeCmisContentStream() {
+        IOUtils.closeQuietly(cmisContentStream);
+        cmisContentStream = null;
     }
 
     /**
@@ -310,6 +344,17 @@ public final class AtomEntryParser {
      * @throws IOException
      */
     private void parseAtomContent(XMLStreamReader parser) throws XMLStreamException, IOException {
+        if (atomContentStream != null) {
+            closeAtomContentStream();
+            throw new CmisInvalidArgumentException("More than one content provided!");
+        }
+
+        if (cmisContentStream != null) {
+            // CMIS content takes precedence (see CMIS spec)
+            XMLUtils.skip(parser);
+            return;
+        }
+
         atomContentStream = new ContentStreamImpl();
 
         // read attributes
@@ -331,26 +376,26 @@ public final class AtomEntryParser {
             }
         }
 
-        ThresholdOutputStream ths = null;
+        TempStoreOutputStream tsos = null;
         byte[] bytes = null;
         if (type.equals("text") || type.equals("html")) {
-            ths = readContentBytes(parser);
+            tsos = readContentBytes(parser);
         } else if (type.equals("xhtml")) {
             bytes = copy(parser);
         } else if (type.endsWith("/xml") || type.endsWith("+xml")) {
             bytes = copy(parser);
         } else if (type.startsWith("text/")) {
-            ths = readContentBytes(parser);
+            tsos = readContentBytes(parser);
         } else {
-            ths = readBase64(parser);
+            tsos = readBase64(parser);
         }
 
-        if (ths != null) {
+        if (tsos != null) {
             try {
-                atomContentStream.setStream(ths.getInputStream());
-                atomContentStream.setLength(BigInteger.valueOf(ths.getSize()));
+                atomContentStream.setStream(tsos.getInputStream());
+                atomContentStream.setLength(BigInteger.valueOf(tsos.getLength()));
             } catch (IOException e) {
-                ths.destroy();
+                tsos.destroy(e);
                 throw e;
             }
         }
@@ -366,6 +411,12 @@ public final class AtomEntryParser {
      * Extract the content stream.
      */
     private void parseCmisContent(XMLStreamReader parser) throws XMLStreamException, IOException {
+        closeAtomContentStream();
+        if (cmisContentStream != null) {
+            closeCmisContentStream();
+            throw new CmisInvalidArgumentException("More than one content provided!");
+        }
+
         cmisContentStream = new ContentStreamImpl();
 
         XMLUtils.next(parser);
@@ -380,12 +431,12 @@ public final class AtomEntryParser {
                     if (TAG_MEDIATYPE.equals(name.getLocalPart())) {
                         cmisContentStream.setMimeType(XMLUtils.readText(parser, XMLConstraints.MAX_STRING_LENGTH));
                     } else if (TAG_BASE64.equals(name.getLocalPart())) {
-                        ThresholdOutputStream ths = readBase64(parser);
+                        TempStoreOutputStream tsos = readBase64(parser);
                         try {
-                            cmisContentStream.setStream(ths.getInputStream());
-                            cmisContentStream.setLength(BigInteger.valueOf(ths.getSize()));
+                            cmisContentStream.setStream(tsos.getInputStream());
+                            cmisContentStream.setLength(BigInteger.valueOf(tsos.getLength()));
                         } catch (IOException e) {
-                            ths.destroy();
+                            tsos.destroy(e);
                             throw e;
                         }
                     } else {
@@ -415,8 +466,8 @@ public final class AtomEntryParser {
     /**
      * Parses a tag that contains content bytes.
      */
-    private ThresholdOutputStream readContentBytes(XMLStreamReader parser) throws XMLStreamException, IOException {
-        ThresholdOutputStream bufferStream = streamFactory.newOutputStream();
+    private TempStoreOutputStream readContentBytes(XMLStreamReader parser) throws XMLStreamException, IOException {
+        TempStoreOutputStream bufferStream = streamFactory.newOutputStream();
 
         XMLUtils.next(parser);
 
@@ -433,7 +484,7 @@ public final class AtomEntryParser {
                         cappedStream.deductBytes(bytes.length);
                     }
                 } else if (event == XMLStreamReader.START_ELEMENT) {
-                    bufferStream.destroy();
+                    bufferStream.destroy(null);
                     throw new CmisInvalidArgumentException("Unexpected tag: " + parser.getName());
                 }
 
@@ -443,11 +494,11 @@ public final class AtomEntryParser {
             }
         } catch (XMLStreamException xse) {
             // remove temp file
-            bufferStream.destroy();
+            bufferStream.destroy(xse);
             throw xse;
         } catch (IOException ioe) {
             // remove temp file
-            bufferStream.destroy();
+            bufferStream.destroy(ioe);
             throw ioe;
         }
 
@@ -459,8 +510,8 @@ public final class AtomEntryParser {
     /**
      * Parses a tag that contains base64 encoded content.
      */
-    private ThresholdOutputStream readBase64(XMLStreamReader parser) throws XMLStreamException, IOException {
-        ThresholdOutputStream bufferStream = streamFactory.newOutputStream();
+    private TempStoreOutputStream readBase64(XMLStreamReader parser) throws XMLStreamException, IOException {
+        TempStoreOutputStream bufferStream = streamFactory.newOutputStream();
         Base64.OutputStream b64stream = new Base64.OutputStream(bufferStream, Base64.DECODE);
 
         XMLUtils.next(parser);
@@ -483,7 +534,7 @@ public final class AtomEntryParser {
                     }
                 } else if (event == XMLStreamReader.START_ELEMENT) {
                     b64stream.close();
-                    bufferStream.destroy();
+                    bufferStream.destroy(null);
                     throw new CmisInvalidArgumentException("Unexpected tag: " + parser.getName());
                 }
 
@@ -495,11 +546,11 @@ public final class AtomEntryParser {
             b64stream.close();
         } catch (XMLStreamException xse) {
             // remove temp file
-            bufferStream.destroy();
+            bufferStream.destroy(xse);
             throw xse;
         } catch (IOException ioe) {
             // remove temp file
-            bufferStream.destroy();
+            bufferStream.destroy(ioe);
             throw ioe;
         }
 
