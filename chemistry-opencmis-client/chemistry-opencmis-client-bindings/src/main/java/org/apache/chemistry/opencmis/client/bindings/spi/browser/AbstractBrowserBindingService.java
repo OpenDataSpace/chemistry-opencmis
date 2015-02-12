@@ -332,8 +332,6 @@ public abstract class AbstractBrowserBindingService implements LinkAccess {
 
         if (obj instanceof Map) {
             return (Map<String, Object>) obj;
-        } else if (obj == null) {
-            return null;
         }
 
         throw new CmisConnectionException("Unexpected object!");
