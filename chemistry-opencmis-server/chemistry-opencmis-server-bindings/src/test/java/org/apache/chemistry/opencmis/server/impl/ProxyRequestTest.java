@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -72,7 +74,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_PROTO_HEADER)).thenReturn(
                 FORWARDED_HTTPS_PROTO);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertEquals(FORWARDED_HTTPS_PROTO, proxyRequest.getScheme());
 
@@ -91,7 +93,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(
                 FORWARDED_SERVER_NAME);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertEquals(FORWARDED_HTTPS_PROTO, proxyRequest.getScheme());
         assertEquals(FORWARDED_SERVER_NAME, proxyRequest.getServerName());
@@ -109,7 +111,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(
                 FORWARDED_SERVER_NAME);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertEquals(FORWARDED_SERVER_NAME, proxyRequest.getServerName());
 
@@ -128,7 +130,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(
                 FORWARDED_SERVER_NAME);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, path);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, path, null, null);
 
         assertEquals(FORWARDED_SERVER_NAME, proxyRequest.getServerName());
 
@@ -144,7 +146,7 @@ public class ProxyRequestTest {
     public void testGetProxiedHostAndPortBaseAddress() throws URISyntaxException {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(FORWARDED_HOST);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertTrue(FORWARDED_HOST.startsWith(proxyRequest.getServerName()));
 
@@ -162,7 +164,28 @@ public class ProxyRequestTest {
                 FORWARDED_HTTPS_PROTO);
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(FORWARDED_HOST);
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
+
+        assertEquals(FORWARDED_HTTPS_PROTO, proxyRequest.getScheme());
+        assertTrue(FORWARDED_HOST.startsWith(proxyRequest.getServerName()));
+
+        URI baseUri = new URI(URL_SERVICE_CALL.compileBaseUrl(proxyRequest, REPOSITORY_ID).toString());
+
+        assertEquals(FORWARDED_HTTPS_PROTO, baseUri.getScheme());
+        assertEquals(FORWARDED_SERVER_NAME, baseUri.getHost());
+        assertEquals(FORWARDED_SERVER_PORT, baseUri.getPort());
+        assertEquals(EXPECTED_PATH, baseUri.getPath());
+    }
+
+    @Test
+    public void testGetProxiedHostReplacedPortAndProtoBaseAddress() throws URISyntaxException {
+        when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_PROTO_HEADER)).thenReturn(
+                FORWARDED_HTTPS_PROTO);
+        when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(FORWARDED_HOST
+                + "," + FORWARDED_HOST);
+
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null,
+                Pattern.compile(",.*"), "");
 
         assertEquals(FORWARDED_HTTPS_PROTO, proxyRequest.getScheme());
         assertTrue(FORWARDED_HOST.startsWith(proxyRequest.getServerName()));
@@ -182,7 +205,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(
                 FORWARDED_SERVER_NAME + ":noportnumber");
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertEquals(FORWARDED_HTTP_PROTO, proxyRequest.getScheme());
         assertTrue(FORWARDED_HOST.startsWith(proxyRequest.getServerName()));
@@ -202,7 +225,7 @@ public class ProxyRequestTest {
         when(this.request.getHeader(ProxyHttpServletRequestWrapper.FORWARDED_HOST_HEADER)).thenReturn(
                 FORWARDED_SERVER_NAME + ":noportnumber");
 
-        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null);
+        ProxyHttpServletRequestWrapper proxyRequest = new ProxyHttpServletRequestWrapper(request, null, null, null);
 
         assertEquals(FORWARDED_HTTPS_PROTO, proxyRequest.getScheme());
         assertTrue(FORWARDED_HOST.startsWith(proxyRequest.getServerName()));
