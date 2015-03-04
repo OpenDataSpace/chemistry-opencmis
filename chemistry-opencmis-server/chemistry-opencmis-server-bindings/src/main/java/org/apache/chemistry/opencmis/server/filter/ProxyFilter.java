@@ -37,22 +37,36 @@ public class ProxyFilter implements Filter {
 
     public static final String PARAM_BASE_PATH = "basePath";
     public static final String PARAM_TRUSTED_PROXIES = "trustedProxies";
+    public static final String PARAM_HOST_PATTERN = "hostPattern";
+    public static final String PARAM_HOST_REPLACE = "hostReplace";
 
     private String basePath;
+    private String hostReplace;
     private Pattern trustedProxies;
+    private Pattern hostPattern;
 
     public void init(FilterConfig filterConfig) throws ServletException {
         basePath = filterConfig.getInitParameter(PARAM_BASE_PATH);
 
         trustedProxies = null;
-        String trustedProxiesString = filterConfig.getInitParameter(PARAM_TRUSTED_PROXIES);
-        if (trustedProxiesString != null) {
+        String tmp = filterConfig.getInitParameter(PARAM_TRUSTED_PROXIES);
+        if (tmp != null) {
             try {
-                trustedProxies = Pattern.compile(trustedProxiesString);
+                trustedProxies = Pattern.compile(tmp);
             } catch (Exception e) {
                 throw new ServletException("Could not compile trustedProxies parameter: " + e, e);
             }
         }
+        hostPattern = null;
+        tmp = filterConfig.getInitParameter(PARAM_HOST_PATTERN);
+        if (tmp != null) {
+            try {
+                hostPattern = Pattern.compile(tmp);
+            } catch (Exception e) {
+                throw new ServletException("Could not compile hostPattern parameter: " + e, e);
+            }
+        }
+        hostReplace = filterConfig.getInitParameter(PARAM_HOST_REPLACE);
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, final FilterChain chain) throws IOException,
@@ -61,7 +75,7 @@ public class ProxyFilter implements Filter {
         // check for trusted proxy
         if (trustedProxies != null && (request instanceof HttpServletRequest)
                 && trustedProxies.matcher(request.getRemoteAddr()).matches()) {
-            request = new ProxyHttpServletRequestWrapper((HttpServletRequest) request, basePath);
+            request = new ProxyHttpServletRequestWrapper((HttpServletRequest) request, basePath, hostPattern, hostReplace);
         }
 
         // call next

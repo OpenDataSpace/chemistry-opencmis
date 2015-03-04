@@ -18,6 +18,8 @@
  */
 package org.apache.chemistry.opencmis.server.filter;
 
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
@@ -35,7 +37,8 @@ public class ProxyHttpServletRequestWrapper extends HttpServletRequestWrapper {
     private final String servletPath;
     private final String requestURI;
 
-    public ProxyHttpServletRequestWrapper(HttpServletRequest request, String basePath) {
+    public ProxyHttpServletRequestWrapper(final HttpServletRequest request,
+            final String basePath, final Pattern hostPattern, final String hostReplace) {
         super(request);
 
         scheme = request.getHeader(FORWARDED_PROTO_HEADER);
@@ -49,6 +52,9 @@ public class ProxyHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
         String host = request.getHeader(FORWARDED_HOST_HEADER);
         if ((host != null) && (host.length() > 0)) {
+            if (null != hostPattern && null != hostReplace) {
+                host = hostPattern.matcher(host).replaceAll(hostReplace);
+            }
             int index = host.indexOf(':');
             if (index < 0) {
                 serverName = host;
