@@ -467,7 +467,7 @@ public class DocumentImpl extends AbstractFilableCmisObject implements Document 
             readUnlock();
         }
 
-        if (refresh) {
+        if (refresh && (newObjectId == null || newObjectId.equals(getObjectId()))) {
             refresh();
         }
 
