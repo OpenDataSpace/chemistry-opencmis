@@ -16,29 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.chemistry.opencmis.client.bindings.spi;
+package org.apache.chemistry.opencmis.commons.data;
+
+import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
 
 /**
- * Provides access to internal links. It bypasses the CMIS domain model. Use
- * with care!
+ * PropertyData objects implementing this interface also may provide the
+ * property definition.
  */
-public interface LinkAccess {
+public interface PropertyDataWithDefinition<T> extends PropertyData<T> {
 
-    /**
-     * Gets a link from the cache if it is there or loads it into the cache if
-     * it is not there.
-     */
-    String loadLink(String repositoryId, String objectId, String rel, String type);
-
-    /**
-     * Gets the content link from the cache if it is there or loads it into the
-     * cache if it is not there.
-     */
-    String loadContentLink(String repositoryId, String documentId);
-
-    /**
-     * Gets a rendition content link from the cache if it is there or loads it
-     * into the cache if it is not there.
-     */
-    String loadRenditionContentLink(String repositoryId, String documentId, String streamId);
+    PropertyDefinition<T> getPropertyDefinition();
 }

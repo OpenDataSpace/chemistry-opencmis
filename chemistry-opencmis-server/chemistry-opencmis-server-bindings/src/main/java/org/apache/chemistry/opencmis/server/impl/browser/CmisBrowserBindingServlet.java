@@ -250,11 +250,11 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
             dispatch(context, request, response, pathFragments);
         } catch (Exception e) {
             if (e instanceof CmisUnauthorizedException) {
-                response.setHeader("WWW-Authenticate", "Basic realm=\"CMIS\"");
+                response.setHeader("WWW-Authenticate", "Basic realm=\"CMIS\", charset=\"UTF-8\"");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization Required");
             } else if (e instanceof CmisPermissionDeniedException) {
                 if (context == null || context.getUsername() == null) {
-                    response.setHeader("WWW-Authenticate", "Basic realm=\"CMIS\"");
+                    response.setHeader("WWW-Authenticate", "Basic realm=\"CMIS\", charset=\"UTF-8\"");
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization Required");
                 } else {
                     printError(context, e, request, response);
@@ -333,8 +333,8 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
 
                 // dispatch
                 if (callUrl == CallUrl.REPOSITORY) {
-                    if (selector == null) {
-                        selector = "";
+                    if (selector == null || selector.length() == 0) {
+                        throw new CmisNotSupportedException("No selector");
                     }
 
                     browserContext.setCallDetails(service, objectId, null, null);
