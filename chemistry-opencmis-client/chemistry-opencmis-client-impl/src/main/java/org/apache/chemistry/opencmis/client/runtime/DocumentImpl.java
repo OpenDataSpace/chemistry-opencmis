@@ -445,6 +445,7 @@ public class DocumentImpl extends AbstractFilableCmisObject implements Document 
         }
 
         if (!getObjectId().equals(objectId.getId())) {
+            getSession().removeObjectFromCache(objectId);
             return (Document) getSession().getObject(objectId, getCreationContext());
         }
 
