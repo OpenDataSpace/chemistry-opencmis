@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,6 +73,8 @@ import org.apache.chemistry.opencmis.commons.impl.dataobjects.FailedToDeleteData
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.PartialContentStreamImpl;
 import org.apache.chemistry.opencmis.commons.spi.Holder;
 import org.apache.chemistry.opencmis.commons.spi.ObjectService;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 
 /**
  * Object Service AtomPub client.
@@ -840,10 +844,29 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         }
 
         if (resp.getResponseCode() == 201) {
+            String value = null;
+            final String location = resp.getContentLocactionHeader();
+
+            try {
+                final URI uri = new URI(location);
+                final List<NameValuePair> query = URLEncodedUtils.parse(uri, IOUtils.UTF8);
+
+                for (final NameValuePair pair : query) {
+                    final String name = pair.getName();
+
+                    if ("id".equals(name)) {
+                        value = pair.getValue();
+                    }
+                }
+            } catch (final URISyntaxException cause) {
+                final String message = "Content location response header must be set!";
+                throw new CmisInvalidArgumentException(message, cause);
+            }
+
             // unset the object ID if a new resource has been created
             // (if the resource has been updated (200 and 204), the object ID
             // hasn't changed)
-            objectId.setValue(null);
+            objectId.setValue(value);
         }
 
         if (changeToken != null) {
