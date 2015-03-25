@@ -2892,6 +2892,10 @@ public abstract class AbstractSessionTest extends AbstractCmisTest {
             addResult(results, assertEquals(expected.getProperties().size(), actual.getProperties().size(), null, f));
         } else {
             for (Property<?> expectedProperty : expected.getProperties()) {
+                if (PropertyIds.CONTENT_STREAM_HASH.equals(expectedProperty.getId())) {
+                    continue;
+                }
+
                 Property<?> actualProperty = actual.getProperty(expectedProperty.getId());
 
                 f = createResult(FAILURE, "Properties don't match! Property: " + expectedProperty.getId());
