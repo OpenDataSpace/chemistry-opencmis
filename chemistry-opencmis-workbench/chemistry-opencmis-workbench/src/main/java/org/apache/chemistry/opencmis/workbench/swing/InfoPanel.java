@@ -59,6 +59,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import org.apache.chemistry.opencmis.workbench.ClientHelper;
+import org.apache.chemistry.opencmis.workbench.WorkbenchScale;
 import org.apache.chemistry.opencmis.workbench.model.ClientModel;
 
 import com.google.zxing.BarcodeFormat;
@@ -98,7 +99,7 @@ public abstract class InfoPanel extends JPanel {
 
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 0;
-        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.insets = WorkbenchScale.scaleInsets(new Insets(3, 3, 3, 3));
 
         Font labelFont = UIManager.getFont("Label.font");
         boldFont = labelFont.deriveFont(Font.BOLD, labelFont.getSize2D() * 1.2f);
@@ -114,7 +115,7 @@ public abstract class InfoPanel extends JPanel {
 
     protected JTextField addLine(final String label, final boolean bold, JTextField textField) {
         textField.setEditable(false);
-        textField.setBorder(BorderFactory.createEmptyBorder());
+        textField.setBorder(WorkbenchScale.scaleBorder(BorderFactory.createEmptyBorder()));
         if (bold) {
             textField.setFont(boldFont);
         }
@@ -170,7 +171,7 @@ public abstract class InfoPanel extends JPanel {
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder());
+        panel.setBorder(WorkbenchScale.scaleBorder(BorderFactory.createEmptyBorder()));
         panel.setOpaque(false);
         panel.add(comp);
         textLable.setLabelFor(panel);
@@ -210,7 +211,7 @@ public abstract class InfoPanel extends JPanel {
             for (Object o : list) {
                 JTextField textField = new JTextField(o == null ? "" : o.toString());
                 textField.setEditable(false);
-                textField.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+                textField.setBorder(WorkbenchScale.scaleBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0)));
                 add(textField);
             }
         }

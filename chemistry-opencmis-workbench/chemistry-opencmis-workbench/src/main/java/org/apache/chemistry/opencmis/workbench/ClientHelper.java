@@ -154,7 +154,8 @@ public final class ClientHelper {
     }
 
     public static boolean isMacOSX() {
-        return System.getProperty("os.name").startsWith("Mac OS X");
+        String osname = System.getProperty("os.name");
+        return osname == null ? false : osname.startsWith("Mac OS X");
     }
 
     public static void installKeyBindings() {
@@ -208,7 +209,7 @@ public final class ClientHelper {
     public static ImageIcon getIcon(String name) {
         URL imageURL = ClientHelper.class.getResource("/images/" + name);
         if (imageURL != null) {
-            return new ImageIcon(imageURL);
+            return WorkbenchScale.scaleIcon(new ImageIcon(imageURL));
         }
 
         return null;
@@ -389,7 +390,7 @@ public final class ClientHelper {
     public static void copyTableToClipboard(JTable table) {
         final String newline = System.getProperty("line.separator");
 
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder(1024);
         final int rows = table.getModel().getRowCount();
         final int cols = table.getModel().getColumnCount();
 
@@ -425,8 +426,8 @@ public final class ClientHelper {
             char c = s.charAt(i);
             if (c == '<') {
                 sb.append("&lt;");
-            } else if (c == '<') {
-                sb.append("&lt;");
+            } else if (c == '>') {
+                sb.append("&gt;");
             } else if (c == '"') {
                 sb.append("&quot;");
             } else if (c == '\'') {
@@ -449,7 +450,7 @@ public final class ClientHelper {
         } else if (value instanceof String) {
             String s = value.toString();
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(s.length() + 16);
             sb.append('\"');
 
             for (int i = 0; i < s.length(); i++) {
@@ -464,7 +465,7 @@ public final class ClientHelper {
 
             return sb.toString();
         } else if (value instanceof Collection<?>) {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(((Collection<?>) value).size() * 16 + 16);
             sb.append('[');
 
             for (Object v : (Collection<?>) value) {
@@ -521,7 +522,7 @@ public final class ClientHelper {
         }
 
         try {
-            return IOUtils.readAllLinesAndRemoveHeader(stream);
+            return IOUtils.readAllLinesAndRemoveHeader(stream, 10000);
         } catch (IOException e1) {
             return "";
         }
@@ -536,7 +537,7 @@ public final class ClientHelper {
                 return null;
             }
         } catch (Exception e) {
-            LOG.error("Cannot open library file: " + propertiesFile, e);
+            LOG.error("Cannot open library file: {}", propertiesFile, e);
             return null;
         }
 
@@ -591,7 +592,7 @@ public final class ClientHelper {
                     if (uri != null) {
                         result.add(new FileEntry(properties.getProperty(file), uri));
                     } else {
-                        LOG.error("Cannot find library entry: " + file);
+                        LOG.error("Cannot find library entry: {}", file);
                     }
                 } catch (URISyntaxException e) {
                     // ignore entry
@@ -601,7 +602,7 @@ public final class ClientHelper {
 
             return result;
         } catch (IOException e) {
-            LOG.error("Cannot read library file: " + propertiesFile);
+            LOG.error("Cannot read library file: {}", propertiesFile);
             return null;
         } finally {
             IOUtils.closeQuietly(stream);
@@ -713,8 +714,11 @@ public final class ClientHelper {
 
     public static void runJSR223Script(final Component parent, final ClientModel model, final File file,
             final String ext, final Writer out) {
+        InputStreamReader reader = null;
         try {
             parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            reader = new InputStreamReader(new FileInputStream(file), IOUtils.UTF8);
 
             ScriptEngineManager mgr = new ScriptEngineManager();
             ScriptEngine engine = mgr.getEngineByExtension(ext);
@@ -723,10 +727,11 @@ public final class ClientHelper {
             engine.put("session", model.getClientSession().getSession());
             engine.put("binding", model.getClientSession().getSession().getBinding());
             engine.put("out", new PrintWriter(out));
-            engine.eval(new InputStreamReader(new FileInputStream(file), IOUtils.UTF8));
+            engine.eval(reader);
         } catch (Exception ex) {
             ClientHelper.showError(null, ex);
         } finally {
+            IOUtils.closeQuietly(reader);
             parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }

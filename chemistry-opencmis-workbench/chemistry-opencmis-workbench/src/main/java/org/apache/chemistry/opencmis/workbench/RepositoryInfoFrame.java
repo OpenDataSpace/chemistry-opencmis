@@ -117,7 +117,7 @@ public class RepositoryInfoFrame extends JFrame {
             addLine("Principal id anyone:").setText(repInfo.getPrincipalIdAnyone());
             addYesNoLabel("Changes incomplete:").setValue(is(repInfo.getChangesIncomplete()));
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(64);
             if (repInfo.getChangesOnType() != null) {
                 for (BaseTypeId bt : repInfo.getChangesOnType()) {
                     appendToString(sb, bt.value());
@@ -147,7 +147,7 @@ public class RepositoryInfoFrame extends JFrame {
                 addLine("Changes:").setText(str(cap.getChangesCapability()));
                 addLine("ACLs:").setText(str(cap.getAclCapability()));
 
-                sb = new StringBuilder();
+                sb = new StringBuilder(128);
                 if (cap.getNewTypeSettableAttributes() != null) {
                     if (Boolean.TRUE.equals(cap.getNewTypeSettableAttributes().canSetId())) {
                         appendToString(sb, "id");
@@ -234,7 +234,7 @@ public class RepositoryInfoFrame extends JFrame {
 
                     JTable permTable = new JTable(data, new String[] { "Permission", "Description" });
                     permTable.setFillsViewportHeight(true);
-                    permTable.setRowHeight(getFontMetrics(permTable.getFont()).getHeight());
+                    permTable.setRowHeight((int) (getFontMetrics(getFont()).getHeight() * 1.1));
                     addComponent("Permissions:", new JScrollPane(permTable));
                 }
 
@@ -250,7 +250,7 @@ public class RepositoryInfoFrame extends JFrame {
 
                     JTable permMapTable = new JTable(data, new String[] { "Key", "Permissions" });
                     permMapTable.setFillsViewportHeight(true);
-                    permMapTable.setRowHeight(getFontMetrics(permMapTable.getFont()).getHeight());
+                    permMapTable.setRowHeight((int) (getFontMetrics(getFont()).getHeight() * 1.1));
                     addComponent("Permission mapping:", new JScrollPane(permMapTable));
                 }
             }

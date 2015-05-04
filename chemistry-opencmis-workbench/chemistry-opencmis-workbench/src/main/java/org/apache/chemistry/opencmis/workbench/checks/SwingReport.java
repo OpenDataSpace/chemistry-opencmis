@@ -55,6 +55,7 @@ import org.apache.chemistry.opencmis.tck.report.HtmlReport;
 import org.apache.chemistry.opencmis.tck.report.TextReport;
 import org.apache.chemistry.opencmis.tck.report.XmlReport;
 import org.apache.chemistry.opencmis.workbench.ClientHelper;
+import org.apache.chemistry.opencmis.workbench.WorkbenchScale;
 
 /**
  * Swing Report.
@@ -100,8 +101,8 @@ public class SwingReport extends AbstractCmisTestReport {
         }
 
         private void createGUI() {
-            setPreferredSize(new Dimension(width, height));
-            setMinimumSize(new Dimension(width, height));
+            setPreferredSize(WorkbenchScale.scaleDimension(new Dimension(width, height)));
+            setMinimumSize(WorkbenchScale.scaleDimension(new Dimension(width, height)));
 
             setLayout(new BorderLayout());
 
@@ -137,7 +138,7 @@ public class SwingReport extends AbstractCmisTestReport {
 
             final JPanel reportPanel = new JPanel();
             reportPanel.add(new JLabel("Open report as "));
-            final JComboBox reportType = new JComboBox(new Object[] { "HTML", "Text", "XML" });
+            final JComboBox<String> reportType = new JComboBox<String>(new String[] { "HTML", "Text", "XML" });
             reportPanel.add(reportType);
             final JButton reportButton = new JButton("go");
             reportPanel.add(reportButton);

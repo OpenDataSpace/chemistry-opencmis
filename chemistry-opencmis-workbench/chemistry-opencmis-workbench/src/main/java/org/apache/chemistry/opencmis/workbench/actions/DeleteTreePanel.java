@@ -35,7 +35,7 @@ public class DeleteTreePanel extends ActionPanel {
     private static final long serialVersionUID = 1L;
 
     private JCheckBox allVersionsBox;
-    private JComboBox unfileObjectsBox;
+    private JComboBox<UnfileObject> unfileObjectsBox;
     private JCheckBox continueOnFailureBox;
 
     public DeleteTreePanel(ClientModel model) {
@@ -47,8 +47,8 @@ public class DeleteTreePanel extends ActionPanel {
         allVersionsBox = new JCheckBox("delete all versions", true);
         addActionComponent(allVersionsBox);
 
-        unfileObjectsBox = new JComboBox(new Object[] { UnfileObject.DELETE, UnfileObject.DELETESINGLEFILED,
-                UnfileObject.UNFILE });
+        unfileObjectsBox = new JComboBox<UnfileObject>(new UnfileObject[] { UnfileObject.DELETE,
+                UnfileObject.DELETESINGLEFILED, UnfileObject.UNFILE });
         unfileObjectsBox.setSelectedIndex(0);
         addActionComponent(unfileObjectsBox);
 
@@ -76,8 +76,9 @@ public class DeleteTreePanel extends ActionPanel {
                 (UnfileObject) unfileObjectsBox.getSelectedItem(), continueOnFailureBox.isSelected());
 
         if (ids != null && !ids.isEmpty()) {
-            StringBuilder sb = new StringBuilder(
-                    "Delete tree failed! At least the following objects could not be deleted:\n");
+            StringBuilder sb = new StringBuilder(128);
+
+            sb.append("Delete tree failed! At least the following objects could not be deleted:\n");
 
             for (String id : ids) {
                 sb.append('\n');

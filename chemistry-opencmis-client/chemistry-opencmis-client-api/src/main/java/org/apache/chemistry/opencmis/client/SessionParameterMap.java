@@ -703,7 +703,11 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
         try {
             load(stream);
         } finally {
-            stream.close();
+            try {
+                stream.close();
+            } finally {
+                // ignore
+            }
         }
     }
 
@@ -787,7 +791,11 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
         try {
             store(stream);
         } finally {
-            stream.close();
+            try {
+                stream.close();
+            } finally {
+                // ignore
+            }
         }
     }
 
@@ -828,7 +836,7 @@ public class SessionParameterMap extends LinkedHashMap<String, String> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(128);
 
         for (Map.Entry<String, String> entry : entrySet()) {
             sb.append(entry.getKey());

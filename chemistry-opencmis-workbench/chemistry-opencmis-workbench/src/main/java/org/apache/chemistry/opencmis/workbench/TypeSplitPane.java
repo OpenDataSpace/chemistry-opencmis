@@ -133,7 +133,7 @@ public class TypeSplitPane extends JSplitPane {
                 policyLabel.setValue(is(type.isControllablePolicy()));
 
                 if (type.getTypeMutability() != null) {
-                    StringBuilder sb = new StringBuilder();
+                    StringBuilder sb = new StringBuilder(64);
 
                     if (Boolean.TRUE.equals(type.getTypeMutability().canCreate())) {
                         sb.append("create");
@@ -261,10 +261,10 @@ public class TypeSplitPane extends JSplitPane {
 
             for (int i = 0; i < COLUMN_WIDTHS.length; i++) {
                 TableColumn column = getColumnModel().getColumn(i);
-                column.setPreferredWidth(COLUMN_WIDTHS[i]);
+                column.setPreferredWidth(WorkbenchScale.scaleInt(COLUMN_WIDTHS[i]));
             }
 
-            setRowHeight(getFontMetrics(getFont()).getHeight());
+            setRowHeight((int) (getFontMetrics(getFont()).getHeight() * 1.1));
 
             final JPopupMenu popup = new JPopupMenu();
             JMenuItem menuItem = new JMenuItem("Copy to clipboard");

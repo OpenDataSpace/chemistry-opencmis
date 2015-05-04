@@ -116,9 +116,15 @@ public class BrowseServlet extends HttpServlet {
                         Document xslDoc = builder.parse(stream);
                         addStylesheet(stylesheetKey, new DOMSource(xslDoc), isOverride);
 
-                        LOG.info("Stylesheet: '" + stylesheetKey + "' -> '" + stylesheetFileName + "'");
+                        LOG.info("Stylesheet: '{}' -> '{}'", stylesheetKey, stylesheetFileName);
                     } catch (Exception e) {
                         LOG.error(e.getMessage(), e);
+                    } finally {
+                        try {
+                            stream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
                     }
                 }
             }
@@ -127,13 +133,13 @@ public class BrowseServlet extends HttpServlet {
         String initAuxRoot = config.getInitParameter(INIT_PARAM_AUXROOT);
         if (initAuxRoot != null) {
             fAuxRoot = initAuxRoot;
-            LOG.info("Auxiliary root: " + fAuxRoot);
+            LOG.info("Auxiliary root: {}", fAuxRoot);
         }
 
         String initAllow = config.getInitParameter(INIT_PARAM_ALLOW);
         if (initAllow != null) {
             fAllow = initAllow;
-            LOG.info("Allow pattern: " + fAllow);
+            LOG.info("Allow pattern: {}", fAllow);
         }
     }
 
@@ -212,7 +218,7 @@ public class BrowseServlet extends HttpServlet {
 
             // debug messages
             if (LOG.isDebugEnabled()) {
-                LOG.debug("'" + browseUrl + "' -> '" + conn.getContentType() + "'");
+                LOG.debug("'{}' -> '{}'", browseUrl, conn.getContentType());
             }
 
             // find stylesheet
@@ -234,6 +240,8 @@ public class BrowseServlet extends HttpServlet {
             } else {
                 // apply stylesheet
                 TransformerFactory f = TransformerFactory.newInstance();
+                f.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
                 Transformer t = f.newTransformer(stylesheet);
                 t.setParameter("browseUrl", getServletUrl(req) + "?" + PARAM_URL + "=");
                 t.setParameter("auxRoot", getAuxRoot(req, fAuxRoot));
@@ -303,11 +311,11 @@ public class BrowseServlet extends HttpServlet {
         if (source == null) {
             String[] ctp = contentType.trim().toLowerCase().split(";");
 
-            StringBuilder match = new StringBuilder();
+            StringBuilder match = new StringBuilder(1024);
             int i = 0;
             while (source == null && i < ctp.length) {
                 if (i > 0) {
-                    match.append(";");
+                    match.append(';');
                 }
                 match.append(ctp[i]);
                 source = fStyleSheets.get(match.toString());
