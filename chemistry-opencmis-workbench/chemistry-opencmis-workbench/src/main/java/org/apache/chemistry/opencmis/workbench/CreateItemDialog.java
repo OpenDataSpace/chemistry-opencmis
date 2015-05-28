@@ -19,20 +19,25 @@
 package org.apache.chemistry.opencmis.workbench;
 
 import java.awt.Cursor;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import org.apache.chemistry.opencmis.client.api.ObjectId;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
+import org.apache.chemistry.opencmis.workbench.icons.NewItemIcon;
 import org.apache.chemistry.opencmis.workbench.model.ClientModel;
 import org.apache.chemistry.opencmis.workbench.swing.CreateDialog;
 
@@ -40,6 +45,8 @@ public class CreateItemDialog extends CreateDialog {
 
     private static final long serialVersionUID = 1L;
 
+    private JRadioButton unfiledButton;
+    private JRadioButton currentPathButton;
     private JTextField nameField;
     private JComboBox<ObjectTypeItem> typeBox;
 
@@ -51,8 +58,25 @@ public class CreateItemDialog extends CreateDialog {
     private void createGUI() {
         final CreateItemDialog thisDialog = this;
 
+        unfiledButton = new JRadioButton("create unfiled");
+        unfiledButton.setSelected(false);
+
+        currentPathButton = new JRadioButton("create in the current folder: "
+                + getClientModel().getCurrentFolder().getPath());
+        currentPathButton.setSelected(true);
+
+        ButtonGroup filedGroup = new ButtonGroup();
+        filedGroup.add(unfiledButton);
+        filedGroup.add(currentPathButton);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.add(unfiledButton);
+        buttonPanel.add(currentPathButton);
+
+        createRow("", buttonPanel, 0);
+
         nameField = new JTextField(60);
-        createRow("Name:", nameField, 0);
+        createRow("Name:", nameField, 1);
 
         ObjectTypeItem[] types = getTypes(BaseTypeId.CMIS_ITEM.value());
         if (types.length == 0) {
@@ -73,9 +97,10 @@ public class CreateItemDialog extends CreateDialog {
         ObjectTypeItem type = (ObjectTypeItem) typeBox.getSelectedItem();
         updateMandatoryFields(type.getObjectType());
 
-        createRow("Type:", typeBox, 1);
+        createRow("Type:", typeBox, 2);
 
-        JButton createButton = new JButton("Create Item", ClientHelper.getIcon("newfolder.png"));
+        JButton createButton = new JButton("Create Item", new NewItemIcon(ClientHelper.BUTTON_ICON_SIZE,
+                ClientHelper.BUTTON_ICON_SIZE));
         createButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 String name = nameField.getText();
@@ -84,7 +109,8 @@ public class CreateItemDialog extends CreateDialog {
                 try {
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-                    ObjectId objectId = getClientModel().createItem(name, type, getMandatoryPropertyValues());
+                    ObjectId objectId = getClientModel().createItem(name, type, getMandatoryPropertyValues(),
+                            unfiledButton.isSelected());
 
                     if (objectId != null) {
                         getClientModel().loadObject(objectId.getId());

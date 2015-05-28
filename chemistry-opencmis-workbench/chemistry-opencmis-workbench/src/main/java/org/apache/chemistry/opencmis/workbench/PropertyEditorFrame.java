@@ -44,7 +44,7 @@ import java.util.TimeZone;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -69,6 +69,10 @@ import org.apache.chemistry.opencmis.commons.enums.Action;
 import org.apache.chemistry.opencmis.commons.enums.Cardinality;
 import org.apache.chemistry.opencmis.commons.enums.Updatability;
 import org.apache.chemistry.opencmis.workbench.PropertyEditorFrame.UpdateStatus.StatusFlag;
+import org.apache.chemistry.opencmis.workbench.icons.AddIcon;
+import org.apache.chemistry.opencmis.workbench.icons.DownIcon;
+import org.apache.chemistry.opencmis.workbench.icons.RemoveIcon;
+import org.apache.chemistry.opencmis.workbench.icons.UpIcon;
 import org.apache.chemistry.opencmis.workbench.model.ClientModel;
 
 /**
@@ -79,7 +83,8 @@ public class PropertyEditorFrame extends JFrame {
     private static final long serialVersionUID = 1L;
 
     private static final String WINDOW_TITLE = "Property Editor";
-    private static final ImageIcon ICON_ADD = ClientHelper.getIcon("add.png");
+    private static final Icon ICON_ADD = new AddIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+            ClientHelper.ICON_BUTTON_ICON_SIZE);
 
     private final ClientModel model;
     private final CmisObject object;
@@ -96,6 +101,7 @@ public class PropertyEditorFrame extends JFrame {
 
     private void createGUI() {
         setTitle(WINDOW_TITLE);
+        setIconImage(ClientHelper.getCmisIcon().getImage());
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setPreferredSize(new Dimension((int) (screenSize.getWidth() / 2), (int) (screenSize.getHeight() / 1.5)));
@@ -717,9 +723,18 @@ public class PropertyEditorFrame extends JFrame {
     public static class MultiValuePropertyInputField extends JPanel implements PropertyValue {
         private static final long serialVersionUID = 1L;
 
-        private static final ImageIcon ICON_UP = ClientHelper.getIcon("up.png");
-        private static final ImageIcon ICON_DOWN = ClientHelper.getIcon("down.png");
-        private static final ImageIcon ICON_REMOVE = ClientHelper.getIcon("remove.png");
+        private static final Icon ICON_UP = new UpIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE);
+        private static final Icon ICON_UP_DISABLED = new UpIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE, false);
+        private static final Icon ICON_DOWN = new DownIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE);
+        private static final Icon ICON_DOWN_DISABLED = new DownIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE, false);
+        private static final Icon ICON_REMOVE = new RemoveIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE);
+        private static final Icon ICON_REMOVE_DISABLED = new RemoveIcon(ClientHelper.ICON_BUTTON_ICON_SIZE,
+                ClientHelper.ICON_BUTTON_ICON_SIZE, false);
 
         private final JComponent component;
         private int position;
@@ -741,6 +756,7 @@ public class PropertyEditorFrame extends JFrame {
             buttonPanel.setBackground(bgColor);
 
             upButton = new JButton(ICON_UP);
+            upButton.setDisabledIcon(ICON_UP_DISABLED);
             upButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -750,6 +766,7 @@ public class PropertyEditorFrame extends JFrame {
             buttonPanel.add(upButton);
 
             downButton = new JButton(ICON_DOWN);
+            downButton.setDisabledIcon(ICON_DOWN_DISABLED);
             downButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -759,6 +776,7 @@ public class PropertyEditorFrame extends JFrame {
             buttonPanel.add(downButton);
 
             JButton removeButton = new JButton(ICON_REMOVE);
+            removeButton.setDisabledIcon(ICON_REMOVE_DISABLED);
             removeButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

@@ -1,5 +1,5 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
+< * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -18,7 +18,7 @@
  */
 package org.apache.chemistry.opencmis.workbench.swing;
 
-import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.*;
+import static org.apache.chemistry.opencmis.commons.impl.CollectionsHelper.isNullOrEmpty;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -164,6 +164,25 @@ public abstract class InfoPanel extends JPanel {
         gridPanel.add(ynl, gbc);
 
         return ynl;
+    }
+
+    protected BaseTypeLabel addBaseTypeLabel(String label) {
+        BaseTypeLabel btl = new BaseTypeLabel();
+
+        JLabel textLable = new JLabel(label);
+        textLable.setLabelFor(btl);
+
+        gbc.gridy++;
+
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+        gridPanel.add(textLable, gbc);
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gridPanel.add(btl, gbc);
+
+        return btl;
     }
 
     protected <T extends JComponent> T addComponent(String label, T comp) {
