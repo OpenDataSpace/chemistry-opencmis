@@ -174,22 +174,13 @@ public class BaseTypesTest extends AbstractSessionTest {
             }
         }
 
+        // simple getTypeChildren paging test - skipping over all base types mut
+        // return an empty list
         TypeDefinitionList typeDefinitionList = session
                 .getBinding()
                 .getRepositoryService()
-                .getTypeChildren(session.getRepositoryInfo().getId(), null, Boolean.FALSE,
-                        BigInteger.valueOf(100), BigInteger.ZERO, null);
-
-        final BigInteger skipCount = typeDefinitionList.getNumItems();
-
-        // simple getTypeChildren paging test - skipping over all base types mut
-        // return an empty list
-        typeDefinitionList = session
-                .getBinding()
-                .getRepositoryService()
-                .getTypeChildren(session.getRepositoryInfo().getId(), null, Boolean.FALSE,
-                        BigInteger.valueOf(100), skipCount, null);
-
+                .getTypeChildren(session.getRepositoryInfo().getId(), null, false, BigInteger.valueOf(100),
+                        BigInteger.valueOf(6), null);
         if (typeDefinitionList == null) {
             addResult(createResult(FAILURE, "getTypeChildren() returned nothing!"));
         } else {
