@@ -84,7 +84,7 @@
                            <descriptors>
                                <descriptor>src/main/assembly/client-with-dependencies-assembly.xml</descriptor>
                                <descriptor>src/main/assembly/client-with-ri-dependencies-assembly.xml</descriptor>
-                               <descriptor>src/main/assembly/client-with-cxf-dependencies-assembly.xml</descriptor>
+                               <descriptor>src/main/assembly/client-with-axis2-dependencies-assembly.xml</descriptor>
                            </descriptors>
                        </configuration>
                    </execution>
@@ -119,6 +119,22 @@
             <artifactId>org.osgi.core</artifactId>
             <version>${osgi.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- CXF -->
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxws</artifactId>
+            <version>${cxf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-transports-http</artifactId>
+            <version>${cxf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-ws-policy</artifactId>
+            <version>${cxf.version}</version>
         </dependency>
         <!-- Sun RI -->
         <dependency>
@@ -155,23 +171,11 @@
                 </exclusion>	 
             </exclusions>
         </dependency>
-        <!-- CXF -->
+        <!-- Axis2 -->
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>${cxf.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http</artifactId>
-            <version>${cxf.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-ws-policy</artifactId>
-            <version>${cxf.version}</version>
+            <groupId>org.apache.axis2</groupId>
+            <artifactId>axis2-jaxws</artifactId>
+            <version>${axis2.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- Test -->

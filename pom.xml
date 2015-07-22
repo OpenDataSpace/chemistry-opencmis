@@ -230,7 +230,7 @@
         <site.staging.url>${site.staging.protocol}://${site.staging.host}${site.staging.folder}</site.staging.url>
         <parentBasedir>${project.basedir}</parentBasedir>
 
-        <woodstox.version>4.4.0</woodstox.version>
+        <woodstox.version>4.4.1</woodstox.version>
         <osgi.version>5.0.0</osgi.version>
         <felix.plugin.version>2.3.7</felix.plugin.version>
         <junit.version>4.11</junit.version>
@@ -238,9 +238,10 @@
         <log4j.version>1.2.17</log4j.version>
         <apacheclient.version>4.2.6</apacheclient.version>
         <jaxws-rt.version>2.1.7</jaxws-rt.version>
-        <cxf.version>2.7.11</cxf.version>
+        <cxf.version>3.0.5</cxf.version>
         <axis2.version>1.6.2</axis2.version>
         <mimepull.version>1.9.4</mimepull.version>
+        <spring.version>4.1.7.RELEASE</spring.version>
     </properties>
 
     <build>
@@ -421,8 +422,6 @@
                     <target>${maven.compile.target}</target>
                     <source>${maven.compile.source}</source>
                     <encoding>UTF-8</encoding>
-                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
                 </configuration>
             </plugin>
             <plugin>

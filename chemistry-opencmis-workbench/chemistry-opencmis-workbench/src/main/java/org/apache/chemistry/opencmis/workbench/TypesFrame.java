@@ -53,6 +53,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.chemistry.opencmis.client.api.ObjectType;
@@ -67,6 +68,7 @@ import org.apache.chemistry.opencmis.commons.impl.IOUtils;
 import org.apache.chemistry.opencmis.workbench.icons.BaseTypeIcon;
 import org.apache.chemistry.opencmis.workbench.icons.CreateTypeIcon;
 import org.apache.chemistry.opencmis.workbench.icons.DeleteTypeIcon;
+import org.apache.chemistry.opencmis.workbench.icons.ReloadIcon;
 import org.apache.chemistry.opencmis.workbench.icons.SaveTypeIcon;
 import org.apache.chemistry.opencmis.workbench.icons.TypeIcon;
 import org.apache.chemistry.opencmis.workbench.icons.UpdateTypeIcon;
@@ -78,10 +80,11 @@ public class TypesFrame extends JFrame {
 
     private static final String WINDOW_TITLE = "CMIS Types";
 
-    private static final int BUTTON_SAVE = 0;
-    private static final int BUTTON_UPDATE = 1;
-    private static final int BUTTON_DELETE = 2;
-    private static final int BUTTON_CREATE = 3;
+    private static final int BUTTON_RELOAD = 0;
+    private static final int BUTTON_SAVE = 1;
+    private static final int BUTTON_UPDATE = 2;
+    private static final int BUTTON_DELETE = 3;
+    private static final int BUTTON_CREATE = 4;
 
     private final ClientModel model;
     private RepositoryInfo repInfo;
@@ -113,11 +116,26 @@ public class TypesFrame extends JFrame {
 
         toolBar = new JToolBar("CMIS Types Toolbar", JToolBar.HORIZONTAL);
 
-        toolbarButton = new JButton[4];
+        toolbarButton = new JButton[5];
 
         JMenuItem menuItem;
 
-        // -- save ---
+        // -- reload -.
+        toolbarButton[BUTTON_RELOAD] = new JButton("Reload", new ReloadIcon(ClientHelper.TOOLBAR_ICON_SIZE,
+                ClientHelper.TOOLBAR_ICON_SIZE));
+        toolbarButton[BUTTON_RELOAD].setDisabledIcon(new ReloadIcon(ClientHelper.TOOLBAR_ICON_SIZE,
+                ClientHelper.TOOLBAR_ICON_SIZE, false));
+        toolbarButton[BUTTON_RELOAD].addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                loadData();
+            }
+        });
+        toolBar.add(toolbarButton[BUTTON_RELOAD]);
+
+        toolBar.addSeparator();
+
+        // -- save --
         final JPopupMenu savePopup = new JPopupMenu();
 
         menuItem = new JMenuItem("Save Type Definition to XML");
@@ -503,7 +521,14 @@ public class TypesFrame extends JFrame {
 
             typesTree.setSelectionRow(0);
         } catch (Exception ex) {
+            // clear tree
+            TreeModel model = typesTree.getModel();
+            if (model instanceof DefaultTreeModel) {
+                ((DefaultTreeModel) model).setRoot(null);
+            }
+
             ClientHelper.showError(null, ex);
+
             return;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
