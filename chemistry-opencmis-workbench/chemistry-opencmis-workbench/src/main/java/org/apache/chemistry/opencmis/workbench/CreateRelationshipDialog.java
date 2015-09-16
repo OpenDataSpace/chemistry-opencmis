@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import org.apache.chemistry.opencmis.client.api.ObjectId;
+import org.apache.chemistry.opencmis.client.api.ObjectType;
 import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
 import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
 import org.apache.chemistry.opencmis.workbench.icons.NewRelationshipIcon;
@@ -67,14 +68,15 @@ public class CreateRelationshipDialog extends CreateDialog {
         typeBox = new JComboBox<ObjectTypeItem>(types);
         typeBox.setSelectedIndex(0);
         typeBox.addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 TypeDefinition type = ((ObjectTypeItem) typeBox.getSelectedItem()).getObjectType();
-                updateMandatoryFields(type);
+                updateMandatoryOrOnCreateFields(type);
             }
         });
 
         ObjectTypeItem type = (ObjectTypeItem) typeBox.getSelectedItem();
-        updateMandatoryFields(type.getObjectType());
+        updateMandatoryOrOnCreateFields(type.getObjectType());
 
         createRow("Type:", typeBox, 1);
 
@@ -90,17 +92,18 @@ public class CreateRelationshipDialog extends CreateDialog {
         JButton createButton = new JButton("Create Relationship", new NewRelationshipIcon(
                 ClientHelper.BUTTON_ICON_SIZE, ClientHelper.BUTTON_ICON_SIZE));
         createButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 String name = nameField.getText();
-                String type = ((ObjectTypeItem) typeBox.getSelectedItem()).getObjectType().getId();
+                ObjectType type = ((ObjectTypeItem) typeBox.getSelectedItem()).getObjectType();
                 String sourceId = sourceIdField.getText();
                 String targetId = targetIdField.getText();
 
                 try {
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-                    ObjectId objectId = getClientModel().createRelationship(name, type, sourceId, targetId,
-                            getMandatoryPropertyValues());
+                    ObjectId objectId = getClientModel().createRelationship(name, type.getId(), sourceId, targetId,
+                            getMandatoryOrOnCreatePropertyValues(type));
 
                     if (objectId != null) {
                         getClientModel().loadObject(objectId.getId());

@@ -84,6 +84,7 @@ import org.apache.chemistry.opencmis.commons.enums.Updatability;
 import org.apache.chemistry.opencmis.commons.enums.VersioningState;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisConstraintException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisNotSupportedException;
+import org.apache.chemistry.opencmis.commons.exceptions.CmisObjectNotFoundException;
 import org.apache.chemistry.opencmis.commons.exceptions.CmisRuntimeException;
 import org.apache.chemistry.opencmis.commons.impl.ClassLoaderUtil;
 import org.apache.chemistry.opencmis.commons.impl.Constants;
@@ -187,9 +188,9 @@ public class SessionImpl implements Session {
         this.parameters = parameters;
         this.locale = determineLocale(parameters);
 
-        this.objectFactory = (objectFactory == null ? createObjectFactory() : objectFactory);
+        this.objectFactory = objectFactory == null ? createObjectFactory() : objectFactory;
         this.authenticationProvider = authenticationProvider;
-        this.cache = (cache == null ? createCache() : cache);
+        this.cache = cache == null ? createCache() : cache;
         this.typeDefCache = typeDefCache;
 
         cachePathOmit = Boolean.parseBoolean(parameters.get(SessionParameter.CACHE_PATH_OMIT));
@@ -268,6 +269,11 @@ public class SessionImpl implements Session {
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to create cache: " + e, e);
         }
+    }
+
+    @Override
+    public Map<String, String> getSessionParameters() {
+        return Collections.unmodifiableMap(parameters);
     }
 
     @Override
@@ -442,6 +448,7 @@ public class SessionImpl implements Session {
         };
     }
 
+    @Override
     public String getLatestChangeLogToken() {
         return getBinding().getRepositoryService().getRepositoryInfo(getRepositoryId(), null).getLatestChangeLogToken();
     }
@@ -460,7 +467,7 @@ public class SessionImpl implements Session {
     public void setDefaultContext(OperationContext context) {
         lock.writeLock().lock();
         try {
-            this.defaultContext = (context == null ? DEFAULT_CONTEXT : context);
+            this.defaultContext = context == null ? DEFAULT_CONTEXT : context;
         } finally {
             lock.writeLock().unlock();
         }
@@ -486,6 +493,7 @@ public class SessionImpl implements Session {
         return new ObjectIdImpl(id);
     }
 
+    @Override
     public Locale getLocale() {
         return locale;
     }
@@ -543,9 +551,7 @@ public class SessionImpl implements Session {
 
     @Override
     public CmisObject getObjectByPath(String path, OperationContext context) {
-        if (path == null) {
-            throw new IllegalArgumentException("Path must be set!");
-        }
+        checkPath(path);
         checkContext(context);
 
         CmisObject result = null;
@@ -702,6 +708,68 @@ public class SessionImpl implements Session {
         }
 
         return (Document) result;
+    }
+
+    @Override
+    public boolean exists(ObjectId objectId) {
+        checkObjectId(objectId);
+        return exists(objectId.getId());
+    }
+
+    @Override
+    public boolean exists(String objectId) {
+        checkObjectId(objectId);
+
+        try {
+            binding.getObjectService().getObject(getRepositoryId(), objectId, "cmis:objectId", Boolean.FALSE,
+                    IncludeRelationships.NONE, "cmis:none", Boolean.FALSE, Boolean.FALSE, null);
+            return true;
+        } catch (CmisObjectNotFoundException onf) {
+            removeObjectFromCache(objectId);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean existsPath(String path) {
+        checkPath(path);
+
+        try {
+            ObjectData object = binding.getObjectService().getObjectByPath(getRepositoryId(), path, "cmis:objectId",
+                    Boolean.FALSE, IncludeRelationships.NONE, "cmis:none", Boolean.FALSE, Boolean.FALSE, null);
+
+            String cacheObjectId = cache.getObjectIdByPath(path);
+            if (cacheObjectId != null && !cacheObjectId.equals(object.getId())) {
+                cache.removePath(path);
+            }
+
+            return true;
+        } catch (CmisObjectNotFoundException onf) {
+            cache.removePath(path);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean existsPath(String parentPath, String name) {
+        if (parentPath == null || parentPath.length() < 1) {
+            throw new IllegalArgumentException("Parent path must be set!");
+        }
+        if (parentPath.charAt(0) != '/') {
+            throw new IllegalArgumentException("Parent path must start with a '/'!");
+        }
+        if (name == null || name.length() < 1) {
+            throw new IllegalArgumentException("Name must be set!");
+        }
+
+        StringBuilder path = new StringBuilder(parentPath.length() + name.length() + 2);
+        path.append(parentPath);
+        if (!parentPath.endsWith("/")) {
+            path.append('/');
+        }
+        path.append(name);
+
+        return existsPath(path.toString());
     }
 
     @Override
@@ -1061,6 +1129,7 @@ public class SessionImpl implements Session {
         }
     }
 
+    @Override
     public CmisBinding getBinding() {
         lock.readLock().lock();
         try {
@@ -1251,7 +1320,7 @@ public class SessionImpl implements Session {
         checkContext(context);
 
         final String id = objectId.getId();
-        final String typeId = (type == null ? null : type.getId());
+        final String typeId = type == null ? null : type.getId();
         final RelationshipService relationshipService = getBinding().getRelationshipService();
         final OperationContext ctxt = new OperationContextImpl(context);
 
@@ -1440,7 +1509,7 @@ public class SessionImpl implements Session {
 
         String[] ids = new String[policyIds.length];
         for (int i = 0; i < policyIds.length; i++) {
-            if ((policyIds[i] == null) || (policyIds[i].getId() == null)) {
+            if (policyIds[i] == null || policyIds[i].getId() == null) {
                 throw new IllegalArgumentException("A Policy ID is not set!");
             }
 
@@ -1462,7 +1531,7 @@ public class SessionImpl implements Session {
 
         String[] ids = new String[policyIds.length];
         for (int i = 0; i < policyIds.length; i++) {
-            if ((policyIds[i] == null) || (policyIds[i].getId() == null)) {
+            if (policyIds[i] == null || policyIds[i].getId() == null) {
                 throw new IllegalArgumentException("A Policy ID is not set!");
             }
 
@@ -1503,6 +1572,15 @@ public class SessionImpl implements Session {
     protected final void checkFolderId(ObjectId folderId) {
         if (folderId == null || folderId.getId() == null) {
             throw new IllegalArgumentException("Invalid folder ID!");
+        }
+    }
+
+    protected final void checkPath(String path) {
+        if (path == null || path.length() < 1) {
+            throw new IllegalArgumentException("Invalid path!");
+        }
+        if (path.charAt(0) != '/') {
+            throw new IllegalArgumentException("Path must start with a '/'!");
         }
     }
 

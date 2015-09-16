@@ -51,23 +51,28 @@ public class DefaultHttpInvoker implements HttpInvoker {
     public DefaultHttpInvoker() {
     }
 
+    @Override
     public Response invokeGET(UrlBuilder url, BindingSession session) {
         return invoke(url, "GET", null, null, null, session, null, null);
     }
 
+    @Override
     public Response invokeGET(UrlBuilder url, BindingSession session, BigInteger offset, BigInteger length) {
         return invoke(url, "GET", null, null, null, session, offset, length);
     }
 
+    @Override
     public Response invokePOST(UrlBuilder url, String contentType, Output writer, BindingSession session) {
         return invoke(url, "POST", contentType, null, writer, session, null, null);
     }
 
+    @Override
     public Response invokePUT(UrlBuilder url, String contentType, Map<String, String> headers, Output writer,
             BindingSession session) {
         return invoke(url, "PUT", contentType, headers, writer, session, null, null);
     }
 
+    @Override
     public Response invokeDELETE(UrlBuilder url, BindingSession session) {
         return invoke(url, "DELETE", null, null, null, session, null, null);
     }
@@ -178,9 +183,9 @@ public class DefaultHttpInvoker implements HttpInvoker {
 
             // send data
             if (writer != null) {
-                
-                //Not supported with All server.
-                //conn.setChunkedStreamingMode((64 * 1024) - 1);
+
+                // Not supported with All server.
+                // conn.setChunkedStreamingMode((64 * 1024) - 1);
 
                 OutputStream connOut = null;
 
@@ -226,7 +231,7 @@ public class DefaultHttpInvoker implements HttpInvoker {
             return new Response(respCode, conn.getResponseMessage(), conn.getHeaderFields(), inputStream,
                     conn.getErrorStream());
         } catch (Exception e) {
-            String status = (respCode > 0 ? " (HTTP status code " + respCode + ")" : "");
+            String status = respCode > 0 ? " (HTTP status code " + respCode + ")" : "";
             throw new CmisConnectionException("Cannot access \"" + url + "\"" + status + ": " + e.getMessage(), e);
         }
     }

@@ -33,6 +33,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
 
 import org.apache.chemistry.opencmis.commons.enums.BindingType;
 import org.apache.chemistry.opencmis.workbench.model.ClientSession;
@@ -51,6 +52,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
     public static final String SYSPROP_READ_TIMEOUT = ClientSession.WORKBENCH_PREFIX + "readtimeout";
     public static final String SYSPROP_USER = ClientSession.WORKBENCH_PREFIX + "user";
     public static final String SYSPROP_PASSWORD = ClientSession.WORKBENCH_PREFIX + "password";
+    public static final String SYSPROP_CSRF_HEADER = ClientSession.WORKBENCH_PREFIX + "csrfheader";
 
     private JTextField urlField;
     private JRadioButton bindingAtomButton;
@@ -68,6 +70,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
     private JRadioButton clientCompressionOffButton;
     private JRadioButton cookiesOnButton;
     private JRadioButton cookiesOffButton;
+    private JTextField csrfHeaderField;
     private JFormattedTextField connectTimeoutField;
     private JFormattedTextField readTimeoutField;
 
@@ -98,6 +101,9 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
 
         createCookieButtons(this);
 
+        csrfHeaderField = createTextField(this, "CSRF Header:");
+        csrfHeaderField.setText(System.getProperty(SYSPROP_CSRF_HEADER, ""));
+
         connectTimeoutField = createIntegerField(this, "Connect timeout (secs):");
         try {
             connectTimeoutField.setValue(Long.parseLong(System.getProperty(SYSPROP_CONN_TIMEOUT, "30")));
@@ -112,7 +118,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
             readTimeoutField.setValue(600);
         }
 
-        makeCompactGrid(this, 10, 2, 5, 10, 5, 5);
+        makeCompactGrid(this, 11, 2, 5, 10, 5, 5);
     }
 
     private void createBindingButtons(Container pane) {
@@ -134,7 +140,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
         bindingContainer.add(bindingWebServicesButton);
         bindingContainer.add(Box.createRigidArea(WorkbenchScale.scaleDimension(new Dimension(10, 0))));
         bindingContainer.add(bindingBrowserButton);
-        JLabel bindingLabel = new JLabel("Binding:", JLabel.TRAILING);
+        JLabel bindingLabel = new JLabel("Binding:", SwingConstants.TRAILING);
 
         pane.add(bindingLabel);
         pane.add(bindingContainer);
@@ -164,7 +170,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
         authenticationContainer.add(authenticationNTLMButton);
         authenticationContainer.add(Box.createRigidArea(WorkbenchScale.scaleDimension(new Dimension(10, 0))));
         authenticationContainer.add(authenticationOAuthButton);
-        JLabel authenticatioLabel = new JLabel("Authentication:", JLabel.TRAILING);
+        JLabel authenticatioLabel = new JLabel("Authentication:", SwingConstants.TRAILING);
 
         pane.add(authenticatioLabel);
         pane.add(authenticationContainer);
@@ -182,7 +188,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
         compressionContainer.add(compressionOnButton);
         compressionContainer.add(Box.createRigidArea(WorkbenchScale.scaleDimension(new Dimension(10, 0))));
         compressionContainer.add(compressionOffButton);
-        JLabel compressionLabel = new JLabel("Compression:", JLabel.TRAILING);
+        JLabel compressionLabel = new JLabel("Compression:", SwingConstants.TRAILING);
 
         pane.add(compressionLabel);
         pane.add(compressionContainer);
@@ -200,7 +206,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
         clientCompressionContainer.add(clientCompressionOnButton);
         clientCompressionContainer.add(Box.createRigidArea(WorkbenchScale.scaleDimension(new Dimension(10, 0))));
         clientCompressionContainer.add(clientCompressionOffButton);
-        JLabel clientCompressionLabel = new JLabel("Client Compression:", JLabel.TRAILING);
+        JLabel clientCompressionLabel = new JLabel("Client Compression:", SwingConstants.TRAILING);
 
         pane.add(clientCompressionLabel);
         pane.add(clientCompressionContainer);
@@ -218,7 +224,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
         cookiesContainer.add(cookiesOnButton);
         cookiesContainer.add(Box.createRigidArea(WorkbenchScale.scaleDimension(new Dimension(10, 0))));
         cookiesContainer.add(cookiesOffButton);
-        JLabel cookiesLabel = new JLabel("Cookies:", JLabel.TRAILING);
+        JLabel cookiesLabel = new JLabel("Cookies:", SwingConstants.TRAILING);
 
         pane.add(cookiesLabel);
         pane.add(cookiesContainer);
@@ -272,7 +278,7 @@ public class BasicLoginTab extends AbstractSpringLoginTab {
 
         return ClientSession.createSessionParameters(url, binding, username, password, authentication,
                 compressionOnButton.isSelected(), clientCompressionOnButton.isSelected(), cookiesOnButton.isSelected(),
-                connectTimeout, readTimeout);
+                csrfHeaderField.getText(), connectTimeout, readTimeout);
     }
 
     @Override

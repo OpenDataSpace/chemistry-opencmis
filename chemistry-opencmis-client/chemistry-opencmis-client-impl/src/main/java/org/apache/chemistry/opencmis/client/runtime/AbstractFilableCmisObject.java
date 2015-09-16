@@ -45,10 +45,12 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
 
     private static final long serialVersionUID = 1L;
 
+    @Override
     public List<Folder> getParents() {
         return getParents(getSession().getDefaultContext());
     }
 
+    @Override
     public List<Folder> getParents(OperationContext context) {
         String objectId = getObjectId();
 
@@ -60,7 +62,7 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         List<Folder> parents = new ArrayList<Folder>();
 
         for (ObjectParentData p : bindingParents) {
-            if ((p == null) || (p.getObject() == null) || (p.getObject().getProperties() == null)) {
+            if (p == null || p.getObject() == null || p.getObject().getProperties() == null) {
                 // should not happen...
                 throw new CmisRuntimeException("Repository sent invalid data!");
             }
@@ -85,12 +87,13 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         return parents;
     }
 
+    @Override
     public List<String> getPaths() {
         String objectId = getObjectId();
 
         ObjectType folderType = getSession().getTypeDefinition(BaseTypeId.CMIS_FOLDER.value());
         PropertyDefinition<?> propDef = folderType.getPropertyDefinitions().get(PropertyIds.PATH);
-        String pathQueryName = (propDef == null ? null : propDef.getQueryName());
+        String pathQueryName = propDef == null ? null : propDef.getQueryName();
 
         // get object paths of the parent folders
         List<ObjectParentData> bindingParents = getBinding().getNavigationService().getObjectParents(getRepositoryId(),
@@ -99,7 +102,7 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         List<String> paths = new ArrayList<String>();
 
         for (ObjectParentData p : bindingParents) {
-            if ((p == null) || (p.getObject() == null) || (p.getObject().getProperties() == null)) {
+            if (p == null || p.getObject() == null || p.getObject().getProperties() == null) {
                 // should not happen...
                 throw new CmisRuntimeException("Repository sent invalid data!");
             }
@@ -127,19 +130,21 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         return paths;
     }
 
+    @Override
     public FileableCmisObject move(ObjectId sourceFolderId, ObjectId targetFolderId) {
         return move(sourceFolderId, targetFolderId, getSession().getDefaultContext());
     }
 
+    @Override
     public FileableCmisObject move(ObjectId sourceFolderId, ObjectId targetFolderId, OperationContext context) {
         String objectId = getObjectId();
         Holder<String> objectIdHolder = new Holder<String>(objectId);
 
-        if ((sourceFolderId == null) || (sourceFolderId.getId() == null)) {
+        if (sourceFolderId == null || sourceFolderId.getId() == null) {
             throw new IllegalArgumentException("Source folder id must be set!");
         }
 
-        if ((targetFolderId == null) || (targetFolderId.getId() == null)) {
+        if (targetFolderId == null || targetFolderId.getId() == null) {
             throw new IllegalArgumentException("Target folder id must be set!");
         }
 
@@ -161,10 +166,11 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         return (FileableCmisObject) movedObject;
     }
 
+    @Override
     public void addToFolder(ObjectId folderId, boolean allVersions) {
         String objectId = getObjectId();
 
-        if ((folderId == null) || (folderId.getId() == null)) {
+        if (folderId == null || folderId.getId() == null) {
             throw new IllegalArgumentException("Folder Id must be set!");
         }
 
@@ -175,6 +181,7 @@ public abstract class AbstractFilableCmisObject extends AbstractCmisObject imple
         getSession().removeObjectFromCache(objectId);
     }
 
+    @Override
     public void removeFromFolder(ObjectId folderId) {
         String objectId = getObjectId();
 

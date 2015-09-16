@@ -85,6 +85,13 @@ public interface Session extends Serializable {
     CmisBinding getBinding();
 
     /**
+     * Returns the session parameters that were used to create this session.
+     * 
+     * @return the session parameters, a unmodifiable Map, not {@code null}
+     */
+    Map<String, String> getSessionParameters();
+
+    /**
      * Returns the current default operation parameters for filtering, paging
      * and caching.
      * 
@@ -618,6 +625,71 @@ public interface Session extends Serializable {
      * @cmis 1.0
      */
     Document getLatestDocumentVersion(String objectId, boolean major, OperationContext context);
+
+    /**
+     * Checks if an object with given object ID exists in the repository and is
+     * visible for the current user.
+     * 
+     * If the object doesn't exist (anymore), it is removed from the cache.
+     * 
+     * @param objectId
+     *            the object ID
+     * @return {@code true} if the object exists in the repository,
+     *         {@code false} otherwise
+     * 
+     * @cmis 1.0
+     */
+    boolean exists(ObjectId objectId);
+
+    /**
+     * Checks if an object with given object ID exists in the repository and is
+     * visible for the current user.
+     * 
+     * If the object doesn't exist (anymore), it is removed from the cache.
+     * 
+     * @param objectId
+     *            the object ID
+     * @return {@code true} if the object exists in the repository,
+     *         {@code false} otherwise
+     * 
+     * @cmis 1.0
+     */
+    boolean exists(String objectId);
+
+    /**
+     * Checks if an object with given path exists in the repository and is
+     * visible for the current user.
+     * 
+     * If the object doesn't exist (anymore), it is removed from the cache.
+     * 
+     * @param path
+     *            the path
+     * @return {@code true} if the object exists in the repository,
+     *         {@code false} otherwise
+     * 
+     * @cmis 1.0
+     */
+    boolean existsPath(String path);
+
+    /**
+     * Checks if an object with given path exists in the repository and is
+     * visible for the current user.
+     * 
+     * If the object doesn't exist (anymore), it is removed from the cache.
+     * 
+     * @param parentPath
+     *            the path of the parent folder
+     * @param name
+     *            the (path segment) name of the object in the folder
+     * 
+     * @return the requested object
+     * 
+     * @throws CmisObjectNotFoundException
+     *             if an object with the given ID doesn't exist
+     * 
+     * @cmis 1.0
+     */
+    boolean existsPath(String parentPath, String name);
 
     /**
      * Removes the given object from the cache.

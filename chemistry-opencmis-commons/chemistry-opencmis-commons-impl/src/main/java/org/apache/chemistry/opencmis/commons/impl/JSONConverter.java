@@ -1146,13 +1146,15 @@ public final class JSONConverter {
         }
 
         // ACL
-        if ((object.getAcl() != null) && (object.getAcl().getAces() != null) && propertyMode != PropertyMode.QUERY) {
+        if (object.getAcl() != null && object.getAcl().getAces() != null && propertyMode != PropertyMode.QUERY) {
             result.put(JSON_OBJECT_ACL, convert(object.getAcl()));
         }
-        setIfNotNull(JSON_OBJECT_EXACT_ACL, object.isExactAcl(), result);
+        if (propertyMode != PropertyMode.QUERY) {
+            setIfNotNull(JSON_OBJECT_EXACT_ACL, object.isExactAcl(), result);
+        }
 
         // policy ids
-        if ((object.getPolicyIds() != null) && (object.getPolicyIds().getPolicyIds() != null)
+        if (object.getPolicyIds() != null && object.getPolicyIds().getPolicyIds() != null
                 && propertyMode != PropertyMode.QUERY) {
             JSONObject policyIds = new JSONObject();
             JSONArray ids = new JSONArray();
@@ -1347,7 +1349,7 @@ public final class JSONConverter {
      * Converts an ACL.
      */
     public static JSONObject convert(final Acl acl) {
-        if ((acl == null) || (acl.getAces() == null)) {
+        if (acl == null || acl.getAces() == null) {
             return null;
         }
 
@@ -2795,7 +2797,7 @@ public final class JSONConverter {
             } else if (element.getValue() instanceof List) {
                 extensions.addAll(convertExtension(element.getKey(), (List<Object>) element.getValue()));
             } else {
-                String value = (element.getValue() == null ? null : element.getValue().toString());
+                String value = element.getValue() == null ? null : element.getValue().toString();
                 extensions.add(new CmisExtensionElementImpl(null, element.getKey(), null, value));
             }
         }
@@ -2818,7 +2820,7 @@ public final class JSONConverter {
             } else if (element.getValue() instanceof List) {
                 extensions.addAll(convertExtension(element.getKey(), (List<Object>) element.getValue()));
             } else {
-                String value = (element.getValue() == null ? null : element.getValue().toString());
+                String value = element.getValue() == null ? null : element.getValue().toString();
                 extensions.add(new CmisExtensionElementImpl(null, element.getKey(), null, value));
             }
         }
@@ -2841,7 +2843,7 @@ public final class JSONConverter {
             } else if (element instanceof List) {
                 extensions.addAll(convertExtension(name, (List<Object>) element));
             } else {
-                String value = (element == null ? null : element.toString());
+                String value = element == null ? null : element.toString();
                 extensions.add(new CmisExtensionElementImpl(null, name, null, value));
             }
         }

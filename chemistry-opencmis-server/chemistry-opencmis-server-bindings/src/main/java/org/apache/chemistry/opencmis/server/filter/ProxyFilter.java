@@ -45,6 +45,7 @@ public class ProxyFilter implements Filter {
     private Pattern trustedProxies;
     private Pattern hostPattern;
 
+    @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         basePath = filterConfig.getInitParameter(PARAM_BASE_PATH);
 
@@ -69,6 +70,7 @@ public class ProxyFilter implements Filter {
         hostReplace = filterConfig.getInitParameter(PARAM_HOST_REPLACE);
     }
 
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response, final FilterChain chain) throws IOException,
             ServletException {
 
@@ -82,6 +84,7 @@ public class ProxyFilter implements Filter {
         chain.doFilter(request, response);
     }
 
+    @Override
     public void destroy() {
     }
 }

@@ -50,6 +50,7 @@ public class RepositoryService {
      * Renders the service document.
      */
     public static class GetRepositories extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -238,6 +239,7 @@ public class RepositoryService {
      * Renders a type children collection.
      */
     public static class GetTypeChildren extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -325,7 +327,7 @@ public class RepositoryService {
             feed.writeCollection(collectionUrl.toString(), null, "Types Collection", "");
 
             // write type entries
-            if ((typeList != null) && (typeList.getList() != null)) {
+            if (typeList != null && typeList.getList() != null) {
                 AtomEntry entry = new AtomEntry(feed.getWriter());
                 for (TypeDefinition type : typeList.getList()) {
                     writeTypeEntry(entry, type, null, repositoryId, baseUrl, false, context.getCmisVersion());
@@ -345,6 +347,7 @@ public class RepositoryService {
      * Renders a type descendants feed.
      */
     public static class GetTypeDescendants extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -420,7 +423,7 @@ public class RepositoryService {
                 AtomEntry entry = new AtomEntry(feed.getWriter());
 
                 for (TypeDefinitionContainer container : typeTree) {
-                    if ((container != null) && (container.getTypeDefinition() != null)) {
+                    if (container != null && container.getTypeDefinition() != null) {
                         writeTypeEntry(entry, container.getTypeDefinition(), container.getChildren(), repositoryId,
                                 baseUrl, false, context.getCmisVersion());
                     }
@@ -437,6 +440,7 @@ public class RepositoryService {
      * Renders a type definition.
      */
     public static class GetTypeDefinition extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -475,6 +479,7 @@ public class RepositoryService {
      * Creates a type.
      */
     public static class CreateType extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -525,6 +530,7 @@ public class RepositoryService {
      * Updates a type.
      */
     public static class UpdateType extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;
@@ -575,6 +581,7 @@ public class RepositoryService {
      * Deletes a type.
      */
     public static class DeleteType extends AbstractAtomPubServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             assert context != null;

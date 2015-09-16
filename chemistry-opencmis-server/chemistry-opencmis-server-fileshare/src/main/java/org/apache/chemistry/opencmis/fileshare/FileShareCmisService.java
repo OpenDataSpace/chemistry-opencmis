@@ -69,6 +69,7 @@ public class FileShareCmisService extends AbstractCmisService implements CallCon
      * 
      * This method should only be called by the service factory.
      */
+    @Override
     public void setCallContext(CallContext context) {
         this.context = context;
     }
@@ -76,6 +77,7 @@ public class FileShareCmisService extends AbstractCmisService implements CallCon
     /**
      * Gets the call context.
      */
+    @Override
     public CallContext getCallContext() {
         return context;
     }
@@ -135,7 +137,7 @@ public class FileShareCmisService extends AbstractCmisService implements CallCon
     public ObjectInFolderList getChildren(String repositoryId, String folderId, String filter, String orderBy,
             Boolean includeAllowableActions, IncludeRelationships includeRelationships, String renditionFilter,
             Boolean includePathSegment, BigInteger maxItems, BigInteger skipCount, ExtensionsData extension) {
-        return getRepository().getChildren(getCallContext(), folderId, filter, includeAllowableActions,
+        return getRepository().getChildren(getCallContext(), folderId, filter, orderBy, includeAllowableActions,
                 includePathSegment, maxItems, skipCount, this);
     }
 

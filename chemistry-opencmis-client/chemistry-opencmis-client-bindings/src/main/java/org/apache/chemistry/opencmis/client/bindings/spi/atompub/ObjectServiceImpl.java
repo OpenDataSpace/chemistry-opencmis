@@ -88,6 +88,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         setSession(session);
     }
 
+    @Override
     public String createDocument(String repositoryId, Properties properties, String folderId,
             ContentStream contentStream, VersioningState versioningState, List<String> policies, Acl addAces,
             Acl removeAces, ExtensionsData extension) {
@@ -123,6 +124,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -137,12 +139,14 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return entry.getId();
     }
 
+    @Override
     public String createDocumentFromSource(String repositoryId, String sourceId, Properties properties,
             String folderId, VersioningState versioningState, List<String> policies, Acl addACEs, Acl removeACEs,
             ExtensionsData extension) {
         throw new CmisNotSupportedException("createDocumentFromSource is not supported by the AtomPub binding!");
     }
 
+    @Override
     public String createFolder(String repositoryId, Properties properties, String folderId, List<String> policies,
             Acl addAces, Acl removeAces, ExtensionsData extension) {
         checkCreateProperties(properties);
@@ -162,6 +166,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -176,6 +181,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return entry.getId();
     }
 
+    @Override
     public String createPolicy(String repositoryId, Properties properties, String folderId, List<String> policies,
             Acl addAces, Acl removeAces, ExtensionsData extension) {
         checkCreateProperties(properties);
@@ -209,6 +215,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -223,6 +230,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return entry.getId();
     }
 
+    @Override
     public String createItem(String repositoryId, Properties properties, String folderId, List<String> policies,
             Acl addAces, Acl removeAces, ExtensionsData extension) {
         checkCreateProperties(properties);
@@ -252,6 +260,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -266,6 +275,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return entry.getId();
     }
 
+    @Override
     public String createRelationship(String repositoryId, Properties properties, List<String> policies, Acl addAces,
             Acl removeAces, ExtensionsData extension) {
         checkCreateProperties(properties);
@@ -296,6 +306,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -310,6 +321,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return entry.getId();
     }
 
+    @Override
     public void updateProperties(String repositoryId, Holder<String> objectId, Holder<String> changeToken,
             Properties properties, ExtensionsData extension) {
         // we need an object id
@@ -342,6 +354,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // update
         Response resp = put(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -391,6 +404,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         }
     }
 
+    @Override
     public List<BulkUpdateObjectIdAndChangeToken> bulkUpdateProperties(String repositoryId,
             List<BulkUpdateObjectIdAndChangeToken> objectIdAndChangeToken, Properties properties,
             List<String> addSecondaryTypeIds, List<String> removeSecondaryTypeIds, ExtensionsData extension) {
@@ -412,6 +426,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post the new folder object
         Response resp = post(new UrlBuilder(link), Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -450,6 +465,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return result;
     }
 
+    @Override
     public void deleteObject(String repositoryId, String objectId, Boolean allVersions, ExtensionsData extension) {
 
         // find the link
@@ -465,6 +481,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         delete(url);
     }
 
+    @Override
     public FailedToDeleteData deleteTree(String repositoryId, String folderId, Boolean allVersions,
             UnfileObject unfileObjects, Boolean continueOnFailure, ExtensionsData extension) {
 
@@ -551,6 +568,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         throw convertStatusCode(resp.getResponseCode(), resp.getResponseMessage(), resp.getErrorContent(), null);
     }
 
+    @Override
     public AllowableActions getAllowableActions(String repositoryId, String objectId, ExtensionsData extension) {
         // find the link
         String link = loadLink(repositoryId, objectId, Constants.REL_ALLOWABLEACTIONS,
@@ -570,6 +588,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return allowableActions.getAllowableActions();
     }
 
+    @Override
     public ContentStream getContentStream(String repositoryId, String objectId, String streamId, BigInteger offset,
             BigInteger length, ExtensionsData extension) {
         // find the link
@@ -623,6 +642,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return result;
     }
 
+    @Override
     public ObjectData getObject(String repositoryId, String objectId, String filter, Boolean includeAllowableActions,
             IncludeRelationships includeRelationships, String renditionFilter, Boolean includePolicyIds,
             Boolean includeACL, ExtensionsData extension) {
@@ -631,6 +651,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
                 includeAllowableActions, includeRelationships, renditionFilter, includePolicyIds, includeACL, extension);
     }
 
+    @Override
     public ObjectData getObjectByPath(String repositoryId, String path, String filter, Boolean includeAllowableActions,
             IncludeRelationships includeRelationships, String renditionFilter, Boolean includePolicyIds,
             Boolean includeACL, ExtensionsData extension) {
@@ -639,6 +660,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
                 includeAllowableActions, includeRelationships, renditionFilter, includePolicyIds, includeACL, extension);
     }
 
+    @Override
     public Properties getProperties(String repositoryId, String objectId, String filter, ExtensionsData extension) {
         ObjectData object = getObjectInternal(repositoryId, IdentifierType.ID, objectId, ReturnVersion.THIS, filter,
                 Boolean.FALSE, IncludeRelationships.NONE, "cmis:none", Boolean.FALSE, Boolean.FALSE, extension);
@@ -646,6 +668,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return object.getProperties();
     }
 
+    @Override
     public List<RenditionData> getRenditions(String repositoryId, String objectId, String renditionFilter,
             BigInteger maxItems, BigInteger skipCount, ExtensionsData extension) {
         ObjectData object = getObjectInternal(repositoryId, IdentifierType.ID, objectId, ReturnVersion.THIS,
@@ -660,6 +683,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         return result;
     }
 
+    @Override
     public void moveObject(String repositoryId, Holder<String> objectId, String targetFolderId, String sourceFolderId,
             ExtensionsData extension) {
         if (objectId == null || objectId.getValue() == null || objectId.getValue().length() == 0) {
@@ -694,6 +718,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // post move request
         Response resp = post(url, Constants.MEDIATYPE_ENTRY, new Output() {
+            @Override
             public void write(OutputStream out) throws XMLStreamException, IOException {
                 entryWriter.write(out);
             }
@@ -712,11 +737,13 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         objectId.setValue(entry.getId());
     }
 
+    @Override
     public void setContentStream(String repositoryId, Holder<String> objectId, Boolean overwriteFlag,
             Holder<String> changeToken, ContentStream contentStream, ExtensionsData extension) {
         setOrAppendContent(repositoryId, objectId, overwriteFlag, changeToken, contentStream, true, false, extension);
     }
 
+    @Override
     public void deleteContentStream(String repositoryId, Holder<String> objectId, Holder<String> changeToken,
             ExtensionsData extension) {
         // we need an object id
@@ -744,6 +771,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
         }
     }
 
+    @Override
     public void appendContentStream(String repositoryId, Holder<String> objectId, Holder<String> changeToken,
             ContentStream contentStream, boolean isLastChunk, ExtensionsData extension) {
         setOrAppendContent(repositoryId, objectId, null, changeToken, contentStream, isLastChunk, true, extension);
@@ -833,6 +861,7 @@ public class ObjectServiceImpl extends AbstractAtomPubService implements ObjectS
 
         // send content
         Response resp = put(url, contentStream.getMimeType(), headers, new Output() {
+            @Override
             public void write(OutputStream out) throws IOException {
                 IOUtils.copy(stream, out);
             }

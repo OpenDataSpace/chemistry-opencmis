@@ -212,6 +212,7 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
         }
     }
 
+    @Override
     public void setMimeType(String mimeType) {
         this.mimeType = mimeType;
     }
@@ -220,6 +221,7 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
         return mimeType;
     }
 
+    @Override
     public void setFileName(String filename) {
         this.filename = filename;
     }
@@ -228,6 +230,7 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
         return filename;
     }
 
+    @Override
     public long getLength() {
         return length;
     }
@@ -244,7 +247,7 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
                 return;
             }
 
-            if ((maxContentSize > -1) && (length + len > maxContentSize)) {
+            if (maxContentSize > -1 && length + len > maxContentSize) {
                 destroy(null);
                 throw new CmisConstraintException("Content too big!");
             }
@@ -533,7 +536,7 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
 
         @Override
         public int read(byte[] b, int off, int len) {
-            if ((pos >= bufSize) || (buf == null)) {
+            if (pos >= bufSize || buf == null) {
                 return -1;
             }
 
@@ -661,7 +664,8 @@ public class ThresholdOutputStream extends TempStoreOutputStream {
 
         @Override
         public boolean markSupported() {
-            return stream.markSupported();
+            // always supported for a BufferedInputStream
+            return true;
         }
 
         @Override

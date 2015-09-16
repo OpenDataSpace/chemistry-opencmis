@@ -70,12 +70,12 @@ public final class POSTHttpServletRequestWrapper extends QueryStringHttpServletR
             }
 
             String filenameControl = HttpUtils.getStringParameter(this, Constants.CONTROL_FILENAME);
-            if ((filenameControl) != null && (filenameControl.trim().length() > 0)) {
+            if (filenameControl != null && filenameControl.trim().length() > 0) {
                 filename = filenameControl;
             }
 
             String contentTypeControl = HttpUtils.getStringParameter(this, Constants.CONTROL_CONTENT_TYPE);
-            if ((contentTypeControl != null) && (contentTypeControl.trim().length() > 0)) {
+            if (contentTypeControl != null && contentTypeControl.trim().length() > 0) {
                 contentType = contentTypeControl;
             }
         } else if (isFormUrlencodedContent(request)) {
@@ -93,6 +93,7 @@ public final class POSTHttpServletRequestWrapper extends QueryStringHttpServletR
         return filename;
     }
 
+    @Override
     public String getContentType() {
         return contentType;
     }
@@ -113,12 +114,12 @@ public final class POSTHttpServletRequestWrapper extends QueryStringHttpServletR
      * @return {@code true} if the body contained data, {@code false} otherwise
      */
     protected boolean parseFormUrlEncodedData(HttpServletRequest request) throws IOException {
-        byte data[] = new byte[BUFFER_SIZE];
+        byte[] data = new byte[BUFFER_SIZE];
         int dataPos = 0;
 
         InputStream stream = request.getInputStream();
         int b;
-        byte buffer[] = new byte[BUFFER_SIZE];
+        byte[] buffer = new byte[BUFFER_SIZE];
 
         // read stream
         while ((b = stream.read(buffer)) != -1) {

@@ -215,6 +215,12 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
         CallContext context = null;
 
         try {
+            // CSRF token check
+            String method = request.getMethod();
+            if (!METHOD_GET.equals(method) && !METHOD_HEAD.equals(method)) {
+                checkCsrfToken(request, response, false, false);
+            }
+
             // set default headers
             response.addHeader("Cache-Control", "private, max-age=0");
             response.addHeader("Server", ServerVersion.OPENCMIS_SERVER);
@@ -227,8 +233,6 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                     pathFragments.length > 0 ? pathFragments[0] : null);
 
             // check HTTP method
-            String method = request.getMethod();
-
             if (METHOD_GET.equals(method)) {
                 request = new QueryStringHttpServletRequestWrapper(request);
             } else if (METHOD_POST.equals(method)) {
@@ -310,6 +314,9 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
 
             // analyze the path
             if (pathFragments.length < 1) {
+                // CSRF check
+                checkCsrfToken(request, response, true, false);
+
                 // root -> repository infos
                 repositoryDispatcher.dispatch("", METHOD_GET, context, service, null, request, response);
                 return;
@@ -341,6 +348,10 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                         throw new CmisNotSupportedException("No selector");
                     }
 
+                    // CSRF check
+                    checkCsrfToken(request, response, SELECTOR_REPOSITORY_INFO.equalsIgnoreCase(selector), false);
+
+                    // dispatch
                     browserContext.setCallDetails(service, objectId, null, null);
                     callServiceFound = repositoryDispatcher.dispatch(selector, method, browserContext, service,
                             repositoryId, request, response);
@@ -367,6 +378,10 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                         }
                     }
 
+                    // CSRF check
+                    checkCsrfToken(request, response, false, SELECTOR_CONTENT.equalsIgnoreCase(selector));
+
+                    // dispatch
                     callServiceFound = rootDispatcher.dispatch(selector, method, browserContext, service, repositoryId,
                             request, response);
                 }
@@ -420,6 +435,7 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
 
     static class ErrorServiceCall extends AbstractBrowserServiceCall {
 
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             // no implementation
@@ -463,9 +479,10 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
             String exceptionName = CmisRuntimeException.EXCEPTION_NAME;
 
             if (ex instanceof CmisRuntimeException) {
-                LOG.error(ex.getMessage(), ex);
+                LOG.error(createLogMessage(ex, request), ex);
+                statusCode = getErrorCode((CmisRuntimeException) ex);
             } else if (ex instanceof CmisStorageException) {
-                LOG.error(ex.getMessage(), ex);
+                LOG.error(createLogMessage(ex, request), ex);
                 statusCode = getErrorCode((CmisStorageException) ex);
                 exceptionName = ((CmisStorageException) ex).getExceptionName();
             } else if (ex instanceof CmisBaseException) {
@@ -473,12 +490,12 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                 exceptionName = ((CmisBaseException) ex).getExceptionName();
 
                 if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
-                    LOG.error(ex.getMessage(), ex);
+                    LOG.error(createLogMessage(ex, request), ex);
                 }
             } else if (ex instanceof IOException) {
-                LOG.warn(ex.getMessage(), ex);
+                LOG.warn(createLogMessage(ex, request), ex);
             } else {
-                LOG.error(ex.getMessage(), ex);
+                LOG.error(createLogMessage(ex, request), ex);
             }
 
             if (response.isCommitted()) {
@@ -489,14 +506,14 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
             String token = (context instanceof BrowserCallContextImpl ? ((BrowserCallContextImpl) context).getToken()
                     : null);
 
+            String message = ex.getMessage();
+            if (!(ex instanceof CmisBaseException)) {
+                message = "An error occurred!";
+            }
+
             if (token == null) {
                 response.resetBuffer();
                 setStatus(request, response, statusCode);
-
-                String message = ex.getMessage();
-                if (!(ex instanceof CmisBaseException)) {
-                    message = "An error occurred!";
-                }
 
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put(ERROR_EXCEPTION, exceptionName);
@@ -510,7 +527,7 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
                 try {
                     writeJSON(jsonResponse, request, response);
                 } catch (Exception e) {
-                    LOG.error(e.getMessage(), e);
+                    LOG.error(createLogMessage(ex, request), e);
                     try {
                         response.sendError(statusCode, message);
                     } catch (Exception en) {
@@ -524,7 +541,7 @@ public class CmisBrowserBindingServlet extends AbstractCmisHttpServlet {
 
                 if (context != null) {
                     setCookie(request, response, context.getRepositoryId(), token,
-                            createCookieValue(statusCode, null, exceptionName, ex.getMessage()));
+                            createCookieValue(statusCode, null, exceptionName, message));
                 }
             }
         }

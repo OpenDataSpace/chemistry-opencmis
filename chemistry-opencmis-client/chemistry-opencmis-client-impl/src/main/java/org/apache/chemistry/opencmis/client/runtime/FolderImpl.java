@@ -69,6 +69,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         initialize(session, objectType, objectData, context);
     }
 
+    @Override
     public Document createDocument(Map<String, ?> properties, ContentStream contentStream,
             VersioningState versioningState, List<Policy> policies, List<Ace> addAces, List<Ace> removeAces,
             OperationContext context) {
@@ -77,7 +78,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
                 addAces, removeAces);
 
         // if no context is provided the object will not be fetched
-        if ((context == null) || (newId == null)) {
+        if (context == null || newId == null) {
             return null;
         }
 
@@ -90,6 +91,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return (Document) object;
     }
 
+    @Override
     public Document createDocumentFromSource(ObjectId source, Map<String, ?> properties,
             VersioningState versioningState, List<Policy> policies, List<Ace> addAces, List<Ace> removeAces,
             OperationContext context) {
@@ -98,7 +100,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
                 addAces, removeAces);
 
         // if no context is provided the object will not be fetched
-        if ((context == null) || (newId == null)) {
+        if (context == null || newId == null) {
             return null;
         }
 
@@ -111,13 +113,14 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return (Document) object;
     }
 
+    @Override
     public Folder createFolder(Map<String, ?> properties, List<Policy> policies, List<Ace> addAces,
             List<Ace> removeAces, OperationContext context) {
 
         ObjectId newId = getSession().createFolder(properties, this, policies, addAces, removeAces);
 
         // if no context is provided the object will not be fetched
-        if ((context == null) || (newId == null)) {
+        if (context == null || newId == null) {
             return null;
         }
 
@@ -130,13 +133,14 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return (Folder) object;
     }
 
+    @Override
     public Policy createPolicy(Map<String, ?> properties, List<Policy> policies, List<Ace> addAces,
             List<Ace> removeAces, OperationContext context) {
 
         ObjectId newId = getSession().createPolicy(properties, this, policies, addAces, removeAces);
 
         // if no context is provided the object will not be fetched
-        if ((context == null) || (newId == null)) {
+        if (context == null || newId == null) {
             return null;
         }
 
@@ -149,13 +153,14 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return (Policy) object;
     }
 
+    @Override
     public Item createItem(Map<String, ?> properties, List<Policy> policies, List<Ace> addAces, List<Ace> removeAces,
             OperationContext context) {
 
         ObjectId newId = getSession().createItem(properties, this, policies, addAces, removeAces);
 
         // if no context is provided the object will not be fetched
-        if ((context == null) || (newId == null)) {
+        if (context == null || newId == null) {
             return null;
         }
 
@@ -168,14 +173,17 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return (Item) object;
     }
 
+    @Override
     public List<String> deleteTree(boolean allVersions, UnfileObject unfile, boolean continueOnFailure) {
         return getSession().deleteTree(this, allVersions, unfile, continueOnFailure);
     }
 
+    @Override
     public String getParentId() {
         return getPropertyValue(PropertyIds.PARENT_ID);
     }
 
+    @Override
     public List<ObjectType> getAllowedChildObjectTypes() {
         List<ObjectType> result = new ArrayList<ObjectType>();
 
@@ -196,10 +204,12 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return result;
     }
 
+    @Override
     public ItemIterable<Document> getCheckedOutDocs() {
         return getCheckedOutDocs(getSession().getDefaultContext());
     }
 
+    @Override
     public ItemIterable<Document> getCheckedOutDocs(OperationContext context) {
         final String objectId = getObjectId();
         final NavigationService navigationService = getBinding().getNavigationService();
@@ -237,10 +247,12 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         });
     }
 
+    @Override
     public ItemIterable<CmisObject> getChildren() {
         return getChildren(getSession().getDefaultContext());
     }
 
+    @Override
     public ItemIterable<CmisObject> getChildren(OperationContext context) {
         final String objectId = getObjectId();
         final NavigationService navigationService = getBinding().getNavigationService();
@@ -274,10 +286,12 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         });
     }
 
+    @Override
     public List<Tree<FileableCmisObject>> getDescendants(int depth) {
         return getDescendants(depth, getSession().getDefaultContext());
     }
 
+    @Override
     public List<Tree<FileableCmisObject>> getDescendants(int depth, OperationContext context) {
         String objectId = getObjectId();
 
@@ -290,10 +304,12 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return convertBindingContainer(providerContainerList, context);
     }
 
+    @Override
     public List<Tree<FileableCmisObject>> getFolderTree(int depth) {
         return getFolderTree(depth, getSession().getDefaultContext());
     }
 
+    @Override
     public List<Tree<FileableCmisObject>> getFolderTree(int depth, OperationContext context) {
         String objectId = getObjectId();
 
@@ -319,7 +335,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
 
         List<Tree<FileableCmisObject>> result = new ArrayList<Tree<FileableCmisObject>>();
         for (ObjectInFolderContainer oifc : bindingContainerList) {
-            if ((oifc.getObject() == null) || (oifc.getObject().getObject() == null)) {
+            if (oifc.getObject() == null || oifc.getObject().getObject() == null) {
                 // shouldn't happen ...
                 continue;
             }
@@ -342,6 +358,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return result;
     }
 
+    @Override
     public boolean isRootFolder() {
         String objectId = getObjectId();
         String rootFolderId = getSession().getRepositoryInfo().getRootFolderId();
@@ -349,6 +366,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return objectId.equals(rootFolderId);
     }
 
+    @Override
     public Folder getFolderParent() {
         if (isRootFolder()) {
             return null;
@@ -362,6 +380,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return parents.get(0);
     }
 
+    @Override
     public String getPath() {
         String path;
 
@@ -377,7 +396,7 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
                         getPropertyQueryName(PropertyIds.PATH), false, IncludeRelationships.NONE, "cmis:none", false,
                         false, null);
 
-                if ((objectData.getProperties() != null) && (objectData.getProperties().getProperties() != null)) {
+                if (objectData.getProperties() != null && objectData.getProperties().getProperties() != null) {
                     PropertyData<?> pathProperty = objectData.getProperties().getProperties().get(PropertyIds.PATH);
 
                     if (pathProperty instanceof PropertyString) {
@@ -435,25 +454,30 @@ public class FolderImpl extends AbstractFilableCmisObject implements Folder {
         return Collections.singletonList(getPath());
     }
 
+    @Override
     public Document createDocument(Map<String, ?> properties, ContentStream contentStream,
             VersioningState versioningState) {
         return this.createDocument(properties, contentStream, versioningState, null, null, null, getSession()
                 .getDefaultContext());
     }
 
+    @Override
     public Document createDocumentFromSource(ObjectId source, Map<String, ?> properties, VersioningState versioningState) {
         return this.createDocumentFromSource(source, properties, versioningState, null, null, null, getSession()
                 .getDefaultContext());
     }
 
+    @Override
     public Folder createFolder(Map<String, ?> properties) {
         return this.createFolder(properties, null, null, null, getSession().getDefaultContext());
     }
 
+    @Override
     public Policy createPolicy(Map<String, ?> properties) {
         return this.createPolicy(properties, null, null, null, getSession().getDefaultContext());
     }
 
+    @Override
     public Item createItem(Map<String, ?> properties) {
         return this.createItem(properties, null, null, null, getSession().getDefaultContext());
     }

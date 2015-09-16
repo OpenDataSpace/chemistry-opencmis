@@ -66,6 +66,7 @@ public abstract class AbstractSimpleTokenHandler implements TokenHandler, Serial
 
     private static final UrlServiceCall URL_SERVICE_CALL = new UrlServiceCall();
 
+    @Override
     public void service(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
 
         String repositoryId = null; // TODO: determine repository id
@@ -331,8 +332,7 @@ public abstract class AbstractSimpleTokenHandler implements TokenHandler, Serial
     }
 
     protected CmisServiceFactory getCmisServiceFactory(final ServletContext servletContext) {
-        CmisServiceFactory factory = (CmisServiceFactory) servletContext
-                .getAttribute(CmisRepositoryContextListener.SERVICES_FACTORY);
+        CmisServiceFactory factory = CmisRepositoryContextListener.getServiceFactory(servletContext);
 
         if (factory == null) {
             throw new CmisRuntimeException("Service factory not available! Configuration problem?");
@@ -402,6 +402,7 @@ public abstract class AbstractSimpleTokenHandler implements TokenHandler, Serial
     }
 
     static class UrlServiceCall extends AbstractBrowserServiceCall {
+        @Override
         public void serve(CallContext context, CmisService service, String repositoryId, HttpServletRequest request,
                 HttpServletResponse response) throws Exception {
             // no implementation

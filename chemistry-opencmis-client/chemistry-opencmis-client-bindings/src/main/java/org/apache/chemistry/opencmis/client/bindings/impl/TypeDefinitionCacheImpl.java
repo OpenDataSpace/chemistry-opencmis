@@ -44,6 +44,7 @@ public class TypeDefinitionCacheImpl implements TypeDefinitionCache {
 
     }
 
+    @Override
     public void initialize(BindingSession session) {
         assert session != null;
 
@@ -65,26 +66,31 @@ public class TypeDefinitionCacheImpl implements TypeDefinitionCache {
         });
     }
 
+    @Override
     public void put(String repositoryId, TypeDefinition typeDefinition) {
-        if ((typeDefinition == null) || (typeDefinition.getId() == null)) {
+        if (typeDefinition == null || typeDefinition.getId() == null) {
             return;
         }
 
         cache.put(typeDefinition, repositoryId, typeDefinition.getId());
     }
 
+    @Override
     public TypeDefinition get(String repositoryId, String typeId) {
         return (TypeDefinition) cache.get(repositoryId, typeId);
     }
 
+    @Override
     public void remove(String repositoryId, String typeId) {
         cache.remove(repositoryId, typeId);
     }
 
+    @Override
     public void remove(String repositoryId) {
         cache.remove(repositoryId);
     }
 
+    @Override
     public void removeAll() {
         cache.removeAll();
     }

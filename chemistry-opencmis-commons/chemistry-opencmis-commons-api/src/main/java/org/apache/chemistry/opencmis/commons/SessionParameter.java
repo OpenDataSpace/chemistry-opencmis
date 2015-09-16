@@ -198,6 +198,14 @@ package org.apache.chemistry.opencmis.commons;
  * <td>-</td>
  * </tr>
  * <tr>
+ * <td>{@link #CSRF_HEADER}</td>
+ * <td>CSRF Header</td>
+ * <td>AtomPub, Web Services, Browser</td>
+ * <td>header name</td>
+ * <td>no</td>
+ * <td>-</td>
+ * </tr>
+ * <tr>
  * <td>{@link #CONNECT_TIMEOUT}</td>
  * <td>HTTP connect timeout</td>
  * <td>AtomPub, Web Services, Browser</td>
@@ -567,10 +575,6 @@ package org.apache.chemistry.opencmis.commons;
  */
 public final class SessionParameter {
 
-    // utility class
-    private SessionParameter() {
-    }
-
     // ---- general parameter ----
     public static final String USER = "org.apache.chemistry.opencmis.user";
     public static final String PASSWORD = "org.apache.chemistry.opencmis.password";
@@ -682,6 +686,8 @@ public final class SessionParameter {
     public static final String PROXY_USER = "org.apache.chemistry.opencmis.binding.proxyuser";
     public static final String PROXY_PASSWORD = "org.apache.chemistry.opencmis.binding.proxypassword";
 
+    public static final String CSRF_HEADER = "org.apache.chemistry.opencmis.binding.csrfheader";
+
     // --- cache ---
 
     public static final String CACHE_SIZE_OBJECTS = "org.apache.chemistry.opencmis.cache.objects.size";
@@ -712,4 +718,8 @@ public final class SessionParameter {
     public static final String INCLUDE_OBJECTID_URL_PARAM_ON_MOVE = "org.apache.chemistry.opencmis.workaround.includeObjectIdOnMove";
     public static final String OMIT_CHANGE_TOKENS = "org.apache.chemistry.opencmis.workaround.omitChangeTokens";
     public static final String ADD_NAME_ON_CHECK_IN = "org.apache.chemistry.opencmis.workaround.addNameOnCheckIn";
+
+    // utility class
+    private SessionParameter() {
+    }
 }

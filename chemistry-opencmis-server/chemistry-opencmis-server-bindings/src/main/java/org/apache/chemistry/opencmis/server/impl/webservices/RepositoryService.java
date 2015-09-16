@@ -58,10 +58,11 @@ public class RepositoryService extends AbstractService implements RepositoryServ
     @Resource
     public WebServiceContext wsContext;
 
+    @Override
     public List<CmisRepositoryEntryType> getRepositories(CmisExtensionType extension) throws CmisException {
         CmisService service = null;
         try {
-            service = getService(wsContext, null);
+            service = getServiceForRepositoryInfo(wsContext, null);
 
             if (stopBeforeService(service)) {
                 return null;
@@ -94,12 +95,13 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public CmisRepositoryInfoType getRepositoryInfo(String repositoryId, CmisExtensionType extension)
             throws CmisException {
         CmisService service = null;
         CmisVersion cmisVersion = null;
         try {
-            service = getService(wsContext, repositoryId);
+            service = getServiceForRepositoryInfo(wsContext, repositoryId);
             cmisVersion = getCmisVersion(wsContext);
 
             if (stopBeforeService(service)) {
@@ -120,6 +122,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public CmisTypeDefinitionListType getTypeChildren(String repositoryId, String typeId,
             Boolean includePropertyDefinitions, BigInteger maxItems, BigInteger skipCount, CmisExtensionType extension)
             throws CmisException {
@@ -146,6 +149,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public CmisTypeDefinitionType getTypeDefinition(String repositoryId, String typeId, CmisExtensionType extension)
             throws CmisException {
         CmisService service = null;
@@ -170,6 +174,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public List<CmisTypeContainer> getTypeDescendants(String repositoryId, String typeId, BigInteger depth,
             Boolean includePropertyDefinitions, CmisExtensionType extension) throws CmisException {
         CmisService service = null;
@@ -198,6 +203,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public void createType(String repositoryId, Holder<CmisTypeDefinitionType> type, CmisExtensionType extension)
             throws CmisException {
         CmisService service = null;
@@ -222,6 +228,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public void updateType(String repositoryId, Holder<CmisTypeDefinitionType> type, CmisExtensionType extension)
             throws CmisException {
         CmisService service = null;
@@ -246,6 +253,7 @@ public class RepositoryService extends AbstractService implements RepositoryServ
         }
     }
 
+    @Override
     public void deleteType(String repositoryId, String typeId, Holder<CmisExtensionType> extension)
             throws CmisException {
 

@@ -121,7 +121,7 @@ public class ClientSession {
 
     public static SessionParameterMap createSessionParameters(String url, BindingType binding, String username,
             String password, Authentication authentication, boolean compression, boolean clientCompression,
-            boolean cookies, long connectionTimeout, long readTimeout) {
+            boolean cookies, String csrfHeader, long connectionTimeout, long readTimeout) {
         SessionParameterMap parameters = new SessionParameterMap();
 
         switch (binding) {
@@ -156,6 +156,13 @@ public class ClientSession {
         parameters.setClientCompression(clientCompression);
 
         parameters.setCookies(cookies);
+
+        if (csrfHeader != null) {
+            String ch = csrfHeader.trim();
+            if (ch.length() > 0) {
+                parameters.setCsrfHeader(ch);
+            }
+        }
 
         if (connectionTimeout > 0) {
             parameters.setConnectionTimeout(connectionTimeout);
@@ -371,13 +378,16 @@ public class ClientSession {
 
     private void acceptSelfSignedCertificates() {
         TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+            @Override
             public X509Certificate[] getAcceptedIssuers() {
                 return new X509Certificate[0];
             }
 
+            @Override
             public void checkClientTrusted(X509Certificate[] certs, String authType) {
             }
 
+            @Override
             public void checkServerTrusted(X509Certificate[] certs, String authType) {
             }
         } };

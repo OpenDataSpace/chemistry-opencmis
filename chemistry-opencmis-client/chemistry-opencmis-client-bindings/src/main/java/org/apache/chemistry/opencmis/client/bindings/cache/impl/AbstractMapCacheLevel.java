@@ -34,16 +34,18 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
     private String fFallbackKey;
     private boolean fSingleValueEnabled = false;
 
+    @Override
     public abstract void initialize(Map<String, String> parameters);
 
+    @Override
     public Object get(String key) {
         Object value = fMap.get(key);
 
-        if ((value == null) && fFallbackEnabled) {
+        if (value == null && fFallbackEnabled) {
             value = fMap.get(fFallbackKey);
         }
 
-        if ((value == null) && fSingleValueEnabled) {
+        if (value == null && fSingleValueEnabled) {
             if (fMap.size() == 1) {
                 value = fMap.values().iterator().next();
             }
@@ -52,10 +54,12 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
         return value;
     }
 
+    @Override
     public void put(Object value, String key) {
         fMap.put(key, value);
     }
 
+    @Override
     public void remove(String key) {
         fMap.remove(key);
     }
@@ -119,7 +123,7 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
         }
 
         String value = parameters.get(name);
-        if ((value == null) || (value.trim().length() == 0)) {
+        if (value == null || value.trim().length() == 0) {
             return defValue;
         }
 
@@ -146,7 +150,7 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
         }
 
         String value = parameters.get(name);
-        if ((value == null) || (value.trim().length() == 0)) {
+        if (value == null || value.trim().length() == 0) {
             return defValue;
         }
 
@@ -173,7 +177,7 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
         }
 
         String value = parameters.get(name);
-        if ((value == null) || (value.trim().length() == 0)) {
+        if (value == null || value.trim().length() == 0) {
             return defValue;
         }
 
@@ -187,6 +191,6 @@ public abstract class AbstractMapCacheLevel implements CacheLevel {
      */
     @Override
     public String toString() {
-        return (fMap == null ? "[no map]" : fMap.toString());
+        return fMap == null ? "[no map]" : fMap.toString();
     }
 }

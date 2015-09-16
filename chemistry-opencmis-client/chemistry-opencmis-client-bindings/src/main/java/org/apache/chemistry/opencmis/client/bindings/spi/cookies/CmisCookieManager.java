@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -182,6 +181,18 @@ public class CmisCookieManager implements Serializable {
                     LOG.debug("Session {}: Retrieved cookies for URL {}: {}", sessionId, url, cookies.toString());
                 }
             }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Removes all cookies.
+     */
+    public void clear() {
+        lock.writeLock().lock();
+        try {
+            store.clear();
         } finally {
             lock.writeLock().unlock();
         }

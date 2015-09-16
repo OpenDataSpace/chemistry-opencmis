@@ -296,6 +296,15 @@ public final class WSConverter {
         }
     }
 
+    private static DatatypeFactory datatypeFactory;
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException("Cannot get a DatatypeFactory instance!", e);
+        }
+    }
+
     /**
      * Private constructor.
      */
@@ -2194,16 +2203,9 @@ public final class WSConverter {
             return null;
         }
 
-        DatatypeFactory df;
-        try {
-            df = DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
-            throw new CmisRuntimeException("Convert exception: " + e.getMessage(), e);
-        }
-
         List<XMLGregorianCalendar> result = new ArrayList<XMLGregorianCalendar>();
         for (GregorianCalendar cal : calendar) {
-            result.add(df.newXMLGregorianCalendar(cal));
+            result.add(datatypeFactory.newXMLGregorianCalendar(cal));
         }
 
         return result;
@@ -2217,14 +2219,7 @@ public final class WSConverter {
             return null;
         }
 
-        DatatypeFactory df;
-        try {
-            df = DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
-            throw new CmisRuntimeException("Convert exception: " + e.getMessage(), e);
-        }
-
-        return df.newXMLGregorianCalendar(calendar);
+        return datatypeFactory.newXMLGregorianCalendar(calendar);
     }
 
     /**
@@ -2690,14 +2685,17 @@ public final class WSConverter {
 
         result.setStream(new DataHandler(new DataSource() {
 
+            @Override
             public OutputStream getOutputStream() throws IOException {
                 return null;
             }
 
+            @Override
             public String getName() {
                 return contentStream.getFileName();
             }
 
+            @Override
             public InputStream getInputStream() throws IOException {
                 if (allowClose) {
                     return stream;
@@ -2711,6 +2709,7 @@ public final class WSConverter {
                 }
             }
 
+            @Override
             public String getContentType() {
                 return contentStream.getMimeType();
             }
@@ -2834,7 +2833,7 @@ public final class WSConverter {
         }
         target.setExtensions(null);
 
-        if ((source == null) || (source.value == null)) {
+        if (source == null || source.value == null) {
             return;
         }
 
