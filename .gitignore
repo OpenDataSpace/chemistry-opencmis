@@ -3,3 +3,5 @@
 .settings/
 log4j.log
 target/
+/.idea
+*.iml

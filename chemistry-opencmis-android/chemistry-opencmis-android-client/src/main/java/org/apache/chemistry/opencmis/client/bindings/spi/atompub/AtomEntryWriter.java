@@ -18,14 +18,22 @@
  */
 package org.apache.chemistry.opencmis.client.bindings.spi.atompub;
 
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_ID;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_TITLE;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_UPDATED;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_BASE64;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_FILENAME;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_MEDIATYPE;
-import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ENTRY;
+import org.apache.chemistry.opencmis.commons.PropertyIds;
+import org.apache.chemistry.opencmis.commons.data.ContentStream;
+import org.apache.chemistry.opencmis.commons.data.ObjectData;
+import org.apache.chemistry.opencmis.commons.data.PropertyData;
+import org.apache.chemistry.opencmis.commons.data.PropertyString;
+import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
+import org.apache.chemistry.opencmis.commons.enums.CmisVersion;
+import org.apache.chemistry.opencmis.commons.exceptions.CmisInvalidArgumentException;
+import org.apache.chemistry.opencmis.commons.impl.DateTimeHelper;
+import org.apache.chemistry.opencmis.commons.impl.XMLConstants;
+import org.apache.chemistry.opencmis.commons.impl.XMLConverter;
+import org.apache.chemistry.opencmis.commons.impl.XMLUtils;
+import org.apache.chemistry.opencmis.commons.impl.dataobjects.BulkUpdateImpl;
+import org.opendataspace.android.util.Base64;
+import org.opendataspace.android.util.Base64InputStream;
+import org.xmlpull.v1.XmlSerializer;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -35,21 +43,14 @@ import java.io.OutputStream;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-import org.apache.chemistry.opencmis.commons.PropertyIds;
-import org.apache.chemistry.opencmis.commons.data.ContentStream;
-import org.apache.chemistry.opencmis.commons.data.ObjectData;
-import org.apache.chemistry.opencmis.commons.data.PropertyData;
-import org.apache.chemistry.opencmis.commons.data.PropertyString;
-import org.apache.chemistry.opencmis.commons.definitions.TypeDefinition;
-import org.apache.chemistry.opencmis.commons.enums.CmisVersion;
-import org.apache.chemistry.opencmis.commons.exceptions.CmisInvalidArgumentException;
-import org.apache.chemistry.opencmis.commons.impl.Base64;
-import org.apache.chemistry.opencmis.commons.impl.DateTimeHelper;
-import org.apache.chemistry.opencmis.commons.impl.XMLConstants;
-import org.apache.chemistry.opencmis.commons.impl.XMLConverter;
-import org.apache.chemistry.opencmis.commons.impl.XMLUtils;
-import org.apache.chemistry.opencmis.commons.impl.dataobjects.BulkUpdateImpl;
-import org.xmlpull.v1.XmlSerializer;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_ID;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_TITLE;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ATOM_UPDATED;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_BASE64;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_FILENAME;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_CONTENT_MEDIATYPE;
+import static org.apache.chemistry.opencmis.client.bindings.spi.atompub.CmisAtomPubConstants.TAG_ENTRY;
 
 /**
  * Writes a CMIS Atom entry to an output stream.
@@ -137,7 +138,7 @@ public class AtomEntryWriter {
 
     /**
      * Writes the entry to an output stream.
-     * 
+     *
      * @throws IOException
      * @throws IllegalStateException
      * @throws IllegalArgumentException
@@ -172,11 +173,13 @@ public class AtomEntryWriter {
         if (stream != null) {
             writer.startTag(XMLConstants.NAMESPACE_RESTATOM, TAG_CONTENT);
 
-            writeTag(writer, XMLConstants.NAMESPACE_RESTATOM, TAG_CONTENT_MEDIATYPE, contentStream.getMimeType());
+            if (contentStream != null) {
+                writeTag(writer, XMLConstants.NAMESPACE_RESTATOM, TAG_CONTENT_MEDIATYPE, contentStream.getMimeType());
 
-            if (contentStream.getFileName() != null) {
-                XMLUtils.write(writer, XMLConstants.PREFIX_APACHE_CHEMISTY, XMLConstants.NAMESPACE_APACHE_CHEMISTRY,
-                        TAG_CONTENT_FILENAME, contentStream.getFileName());
+                if (contentStream.getFileName() != null) {
+                    XMLUtils.write(writer, XMLConstants.PREFIX_APACHE_CHEMISTY, XMLConstants.NAMESPACE_APACHE_CHEMISTRY,
+                            TAG_CONTENT_FILENAME, contentStream.getFileName());
+                }
             }
 
             writer.startTag(XMLConstants.NAMESPACE_RESTATOM, TAG_CONTENT_BASE64);
@@ -234,22 +237,13 @@ public class AtomEntryWriter {
     }
 
     private void writeContent(XmlSerializer writer) throws IOException {
-        @SuppressWarnings("resource")
-        Base64.InputStream b64stream = new Base64.InputStream(stream, Base64.ENCODE);
+        Base64InputStream b64stream = new Base64InputStream(stream, Base64.DEFAULT);
 
         char[] buffer = new char[BUFFER_SIZE];
-        int pos = 0;
-        int b;
+        int numBytes;
 
-        while ((b = b64stream.read()) > -1) {
-            buffer[pos++] = (char) (b & 0xFF);
-            if (pos == buffer.length) {
-                writer.text(buffer, 0, buffer.length);
-                pos = 0;
-            }
-        }
-        if (pos > 0) {
-            writer.text(buffer, 0, pos);
+        while ((numBytes = b64stream.read(buffer, 0, BUFFER_SIZE)) >= 0) {
+            writer.text(buffer, 0, numBytes);
         }
     }
 
@@ -257,8 +251,8 @@ public class AtomEntryWriter {
         return DateTimeHelper.formatXmlDateTime(new GregorianCalendar(TimeZone.getTimeZone("GMT")));
     }
 
-    private static void writeTag(XmlSerializer writer, String tagNameSpace, String tagName, String text)
-            throws IOException {
+    private static void writeTag(XmlSerializer writer, String tagNameSpace, String tagName, String text) throws
+            IOException {
         writer.startTag(tagNameSpace, tagName);
         writer.text(text);
         writer.endTag(tagNameSpace, tagName);
