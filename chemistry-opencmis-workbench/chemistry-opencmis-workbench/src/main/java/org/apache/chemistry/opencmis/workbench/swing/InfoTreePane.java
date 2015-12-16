@@ -16,27 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.chemistry.opencmis.commons.impl.tube;
+package org.apache.chemistry.opencmis.workbench.swing;
 
-import org.apache.chemistry.opencmis.commons.impl.tube.client.WssMUTube;
+import java.awt.Dimension;
 
-import com.sun.xml.ws.api.pipe.ClientTubeAssemblerContext;
-import com.sun.xml.ws.api.pipe.Tube;
-import com.sun.xml.ws.util.pipe.StandaloneTubeAssembler;
+import javax.swing.JScrollPane;
 
-/**
- * Assembler for OpenCMIS client and server tubelines.
- */
-public class OpenCMISTubeAssembler extends StandaloneTubeAssembler {
+import org.apache.chemistry.opencmis.workbench.WorkbenchScale;
 
-    @Override
-    public Tube createClient(ClientTubeAssemblerContext context) {
-        Tube head = context.createTransportTube();
-        head = context.createSecurityTube(head);
-        head = context.createWsaTube(head);
-        head = new WssMUTube(context.getBinding(), head);
+public class InfoTreePane<E> extends JScrollPane {
 
-        return context.createHandlerTube(head);
+    private static final long serialVersionUID = 1L;
+
+    private InfoTree<E> infoTree;
+
+    public InfoTreePane(InfoTree<E> infoTree) {
+        this(infoTree, 300, 200);
     }
 
+    public InfoTreePane(InfoTree<E> infoTree, int width, int height) {
+        super(infoTree);
+        this.infoTree = infoTree;
+        setPreferredSize(new Dimension(WorkbenchScale.scaleInt(width), WorkbenchScale.scaleInt(height)));
+    }
+
+    public void setData(final E data) {
+        infoTree.setData(data);
+        setVisible(data != null);
+    }
 }

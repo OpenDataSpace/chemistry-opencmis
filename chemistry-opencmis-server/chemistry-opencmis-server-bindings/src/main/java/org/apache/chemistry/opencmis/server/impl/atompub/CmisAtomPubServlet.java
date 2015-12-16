@@ -48,6 +48,7 @@ import static org.apache.chemistry.opencmis.server.shared.Dispatcher.METHOD_PUT;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -84,7 +85,7 @@ import org.apache.chemistry.opencmis.server.shared.NoBodyHttpServletResponseWrap
 import org.apache.chemistry.opencmis.server.shared.QueryStringHttpServletRequestWrapper;
 import org.apache.chemistry.opencmis.server.shared.ServiceCall;
 import org.apache.chemistry.opencmis.server.shared.TempStoreOutputStreamFactory;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -358,12 +359,28 @@ public class CmisAtomPubServlet extends AbstractCmisHttpServlet {
                     + "BODY {font-family:Verdana,arial,sans-serif;color:black;font-size:14px;} "
                     + "HR {color:#3c78b5;height:1px;}--></style></head><body>");
             pw.print("<h1>HTTP Status " + statusCode + " - <!--exception-->" + exceptionName + "<!--/exception--></h1>");
-            pw.print("<p><!--message-->" + StringEscapeUtils.escapeHtml(message) + "<!--/message--></p>");
+            pw.print("<p><!--message-->");
+            StringEscapeUtils.ESCAPE_HTML4.translate(message, pw);
+            pw.print("<!--/message--></p>");
 
             String st = ExceptionHelper.getStacktraceAsString(ex);
             if (st != null) {
-                pw.print("<hr noshade='noshade'/><!--stacktrace--><pre>\n" + st
-                        + "\n</pre><!--/stacktrace--><hr noshade='noshade'/>");
+                pw.print("<hr noshade='noshade'/><!--stacktrace--><pre>\n<!--key-->stacktrace<!--/key><!--value-->"
+                        + st + "<!--/value-->\n</pre><!--/stacktrace--><hr noshade='noshade'/>");
+            }
+
+            if (ex instanceof CmisBaseException) {
+                Map<String, String> additionalData = ((CmisBaseException) ex).getAdditionalData();
+                if (additionalData != null && !additionalData.isEmpty()) {
+                    pw.print("<hr noshade='noshade'/>Additional data:<br><br>");
+                    for (Map.Entry<String, String> e : additionalData.entrySet()) {
+                        pw.print("<!--key-->");
+                        StringEscapeUtils.ESCAPE_HTML4.translate(e.getKey(), pw);
+                        pw.print("<!--/key--> = <!--value-->");
+                        StringEscapeUtils.ESCAPE_HTML4.translate(e.getValue(), pw);
+                        pw.print("<!--/value--><br>");
+                    }
+                }
             }
 
             pw.print("</body></html>");

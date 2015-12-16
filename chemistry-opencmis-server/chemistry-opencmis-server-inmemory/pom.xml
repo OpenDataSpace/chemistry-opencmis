@@ -68,6 +68,7 @@
                     </overlays>
                     <archiveClasses>true</archiveClasses>
                     <attachClasses>true</attachClasses>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
             <plugin>
@@ -79,11 +80,6 @@
                     <wtpversion>2.0</wtpversion>
                     <wtpContextName>inmemory</wtpContextName>
                     <linkedResources>
-                        <linkedResource>
-                            <name>src/main/webapp/WEB-INF/sun-jaxws.xml</name>
-                            <type>1</type>
-                            <location>WORKSPACE_LOC/chemistry-opencmis-server/chemistry-opencmis-server-bindings-war/src/main/webapp/WEB-INF/sun-jaxws.xml</location>
-                        </linkedResource>
                         <linkedResource>
                             <name>src/main/webapp/WEB-INF/web.xml</name>
                             <type>1</type>
