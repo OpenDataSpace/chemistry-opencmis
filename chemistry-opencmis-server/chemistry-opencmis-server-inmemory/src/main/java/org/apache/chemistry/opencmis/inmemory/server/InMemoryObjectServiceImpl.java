@@ -268,6 +268,11 @@ public class InMemoryObjectServiceImpl extends InMemoryAbstractServiceImpl {
 
         ObjectStore objectStore = fStoreManager.getObjectStore(repositoryId);
         objectStore.setContent(so, null);
+        if (null != changeToken) {
+            String changeTokenVal = so.getChangeToken();
+            LOG.debug("deleteContentStream(), new change token is: " + changeTokenVal);
+            changeToken.setValue(changeTokenVal);
+        }
         LOG.debug("stop deleteContentStream()");
     }
 
@@ -601,6 +606,11 @@ public class InMemoryObjectServiceImpl extends InMemoryAbstractServiceImpl {
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
         objStore.setContent(so, contentStream);
         so.updateSystemBasePropertiesWhenModified(null, context.getUsername());
+        if (null != changeToken) {
+            String changeTokenVal = so.getChangeToken();
+            LOG.debug("setContentStream(), new change token is: " + changeTokenVal);
+            changeToken.setValue(changeTokenVal);
+        }
         LOG.debug("stop setContentStream()");
     }
 
@@ -769,7 +779,7 @@ public class InMemoryObjectServiceImpl extends InMemoryAbstractServiceImpl {
 
         if (changeToken != null && changeToken.getValue() != null
                 && Long.valueOf(so.getChangeToken()) > Long.valueOf(changeToken.getValue())) {
-            throw new CmisUpdateConflictException("updateProperties failed: changeToken does not match");
+            throw new CmisUpdateConflictException("appendContentStream failed: changeToken does not match");
         }
 
         if (!(so instanceof Document || so instanceof VersionedDocument || so instanceof DocumentVersion)) {
@@ -797,6 +807,11 @@ public class InMemoryObjectServiceImpl extends InMemoryAbstractServiceImpl {
         ObjectStore objStore = fStoreManager.getObjectStore(repositoryId);
         objStore.appendContent(so, contentStream);
         so.updateSystemBasePropertiesWhenModified(null, context.getUsername());
+        if (null != changeToken) {
+            String changeTokenVal = so.getChangeToken();
+            LOG.debug("appendContentStream(), new change token is: " + changeTokenVal);
+            changeToken.setValue(changeTokenVal);
+        }
     }
 
     public List<BulkUpdateObjectIdAndChangeToken> bulkUpdateProperties(CallContext context, String repositoryId,
